@@ -1,0 +1,72 @@
+import type { Dictionary } from "./el";
+
+const en: Dictionary = {
+  app: { name: "EduCore", tagline: "Tutoring center management platform" },
+  common: {
+    save: "Save", cancel: "Cancel", create: "Create", edit: "Edit", close: "Close", search: "Search", loading: "Loading…", retry: "Retry",
+    back: "Back", active: "Active", inactive: "Inactive", suspended: "Suspended", activate: "Activate", deactivate: "Deactivate",
+    confirm: "Confirm", optional: "optional", students: "students", viewAll: "View all", none: "—",
+  },
+  roles: { SUPER_ADMIN: "Platform Admin", CENTER_ADMIN: "Administrator", TEACHER: "Teacher", STUDENT: "Student", PARENT: "Parent" },
+  levels: { GYM_A: "Gymnasium Year 1", GYM_B: "Gymnasium Year 2", GYM_C: "Gymnasium Year 3", LYK_A: "Lyceum Year 1", LYK_B: "Lyceum Year 2", LYK_C: "Lyceum Year 3" },
+  days: { 1: "Monday", 2: "Tuesday", 3: "Wednesday", 4: "Thursday", 5: "Friday", 6: "Saturday", 7: "Sunday" },
+  daysShort: { 1: "Mon", 2: "Tue", 3: "Wed", 4: "Thu", 5: "Fri", 6: "Sat", 7: "Sun" },
+  greeting: { morning: "Good morning", afternoon: "Good afternoon", evening: "Good evening" },
+  nav: {
+    home: "Home", dashboard: "Dashboard", students: "Students", teachers: "Teachers", parents: "Parents", classes: "Classes", subjects: "Subjects",
+    myClasses: "My Classes", materials: "Learning Materials", assignments: "Assignments", exams: "Exams", grades: "Grades",
+    attendance: "Attendance", calendar: "Calendar", announcements: "Announcements", profile: "My Profile", centers: "Centers",
+    activity: "Activity", settings: "Settings", children: "My Children", reports: "Reports", sectionMain: "Main", sectionAcademic: "Academics",
+    sectionAdmin: "Administration", sectionAccount: "Account",
+  },
+  auth: {
+    signIn: "Sign in", signInTitle: "Welcome back", signInSubtitle: "Sign in to your account to continue.", email: "Email",
+    password: "Password", forgot: "Forgot password?", signingIn: "Signing in…", invalid: "Incorrect email or password.", logout: "Sign out",
+    demoAccounts: "Demo accounts", demoHint: "Click a role to fill in the credentials.",
+    heroTitle: "Your entire tutoring center, on one platform.",
+    heroBody: "Students, teachers and parents connected — with grades, attendance, homework and materials in real time.",
+    heroPoint1: "Secure role-based access", heroPoint2: "Greek grading system", heroPoint3: "Parent & student portals",
+    forgotTitle: "Reset password", forgotSubtitle: "If the email is registered you will receive a reset link.", sendLink: "Send reset link",
+    linkSent: "If an account exists for that email, a reset link has been sent.", devLink: "Development environment — the link (instead of email):",
+    backToLogin: "Back to sign in", resetTitle: "New password", newPassword: "New password", confirmPassword: "Confirm password",
+    passwordRule: "At least 10 characters.", mismatch: "Passwords do not match.", resetDone: "Password changed. Sign in with your new password.",
+    resetInvalid: "This link is invalid or has expired.", setPassword: "Set password", sessionExpired: "Your session expired. Please sign in again.",
+    noCenter: "Your account is not linked to an active tutoring center.", noCenterBody: "Please contact your tutoring center's office.",
+    rateLimited: "Too many attempts. Please try again in a few minutes.",
+  },
+  shell: {
+    notifications: "Notifications", noNotifications: "No notifications yet.", theme: "Theme", light: "Light", dark: "Dark", language: "Language",
+    switchCenter: "Switch center", openMenu: "Open menu", searchPlaceholder: "Search…", platformView: "Platform view", selectCenter: "Select a center",
+  },
+  dashboard: {
+    overview: "Here's how your center looks today.", studentIntro: "Here's your day and your week.", teacherIntro: "Your classes and schedule.",
+    parentIntro: "Your children's progress at a glance.", activeStudents: "Active students", teachers: "Teachers", activeClasses: "Active classes",
+    parents: "Parents", subjects: "Subjects", myClasses: "My classes", myStudents: "My students", todayLessons: "Today's lessons",
+    noLessonsToday: "No lessons today.", weekSchedule: "Weekly schedule", classes: "Classes", academicYear: "Academic year",
+    noClasses: "No classes yet.", roadmapTitle: "Coming next", roadmapBody: "These modules are delivered in the next project phases.",
+    child: "Child", noChildren: "No children are linked to your account.", noChildrenBody: "The center's office can link your account to your child.",
+  },
+  comingSoon: { title: "In development", body: "The “{{name}}” module is delivered in Phase {{phase}}.", back: "Back to home" },
+  platform: {
+    title: "Platform Administration", subtitle: "Tutoring centers, administrators and platform activity.", centers: "Centers",
+    activeCenters: "Active centers", users: "Active users", students: "Students", teachers: "Teachers", logins7d: "Sign-ins (7 days)",
+    newCenter: "New center", name: "Name", slug: "Identifier (slug)", city: "City", email: "Contact email", phone: "Phone", address: "Address",
+    gradeScale: "Default grade scale", scale20: "0–20 (Greek)", percent: "Percentage %", admins: "Administrators", addAdmin: "New administrator",
+    firstName: "First name", lastName: "Last name", initialPassword: "Initial password", open: "Open", openCenter: "Enter center",
+    recentActivity: "Recent activity", noActivity: "No activity yet.", created: "Center created.", updated: "Changes saved.",
+    adminCreated: "Administrator created.", confirmDeactivate: "Deactivate center?",
+    confirmDeactivateBody: "All users of “{{name}}” will lose access until it is reactivated. No data is deleted.", members: "Members",
+    noAdmins: "No administrators.", lastLogin: "Last sign-in", never: "Never",
+  },
+  profile: {
+    title: "My Profile", subtitle: "Your account details and preferences.", details: "Details", firstName: "First name", lastName: "Last name",
+    phone: "Phone", language: "App language", saved: "Profile updated.", security: "Security", changePassword: "Change password",
+    currentPassword: "Current password", passwordChanged: "Password changed. Other sessions were signed out.",
+  },
+  errors: {
+    generic: "Something went wrong.", genericBody: "An unexpected error occurred. Try refreshing the page.", reload: "Reload",
+    notFound: "Page not found", notFoundBody: "The page you requested doesn't exist or was moved.", forbidden: "You don't have access to this page.",
+    validation: "Please check the form fields.",
+  },
+};
+export default en;
