@@ -1,5 +1,6 @@
 // EduCore database schema
 // ---------------------------------------------------------------------------
+// Database: MySQL 8 / MariaDB 10.6+ (utf8mb4).
 // Tenancy model: every center-owned record carries `centerId`. All queries in
 // the API layer are scoped by the caller's active center (see
 // src/middleware/auth.ts). A `User` is a global identity; its role inside a
@@ -12,7 +13,7 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "mysql" // Hostinger provides MySQL/MariaDB
   url      = env("DATABASE_URL")
 }
 
@@ -127,8 +128,8 @@ enum NotificationType {
 
 model User {
   id           String        @id @default(cuid())
-  email        String        @unique
-  passwordHash String
+  email        String        @unique @db.VarChar(254)
+  passwordHash String        @db.VarChar(255)
   firstName    String
   lastName     String
   phone        String?
@@ -156,17 +157,17 @@ model User {
 }
 
 model Session {
-  id                String    @id @default(cuid())
-  tokenHash         String    @unique
+  id                String   @id @default(cuid())
+  tokenHash         String   @unique
   csrfToken         String
   userId            String
   activeCenterId    String?
   ip                String?
-  userAgent         String?
+  userAgent         String?  @db.VarChar(300)
   expiresAt         DateTime // idle expiry (sliding)
   absoluteExpiresAt DateTime // hard cap regardless of activity
-  lastSeenAt        DateTime  @default(now())
-  createdAt         DateTime  @default(now())
+  lastSeenAt        DateTime @default(now())
+  createdAt         DateTime @default(now())
 
   user         User            @relation(fields: [userId], references: [id], onDelete: Cascade)
   activeCenter TutoringCenter? @relation(fields: [activeCenterId], references: [id], onDelete: SetNull)
@@ -195,7 +196,7 @@ model TutoringCenter {
   name              String
   slug              String       @unique
   city              String?
-  address           String?
+  address           String?      @db.VarChar(255)
   phone             String?
   email             String?
   timezone          String       @default("Europe/Athens")
@@ -204,29 +205,29 @@ model TutoringCenter {
   createdAt         DateTime     @default(now())
   updatedAt         DateTime     @updatedAt
 
-  sessions          Session[]
-  memberships       CenterMembership[]
-  studentProfiles   StudentProfile[]
-  teacherProfiles   TeacherProfile[]
-  parentLinks       ParentStudentLink[]
-  subjects          Subject[]
-  academicYears     AcademicYear[]
-  classGroups       ClassGroup[]
-  scheduleSlots     ClassScheduleSlot[]
-  enrollments       Enrollment[]
-  teacherAssigns    ClassTeacherAssignment[]
-  lessons           Lesson[]
-  attendance        Attendance[]
-  files             FileAsset[]
-  materials         EducationalMaterial[]
-  exams             Exam[]
-  examGrades        ExamGrade[]
-  assignments       Assignment[]
-  submissions       AssignmentSubmission[]
-  announcements     Announcement[]
-  notifications     Notification[]
-  auditLogs         AuditLog[]
-  calendarEvents    CalendarEvent[]
+  sessions        Session[]
+  memberships     CenterMembership[]
+  studentProfiles StudentProfile[]
+  teacherProfiles TeacherProfile[]
+  parentLinks     ParentStudentLink[]
+  subjects        Subject[]
+  academicYears   AcademicYear[]
+  classGroups     ClassGroup[]
+  scheduleSlots   ClassScheduleSlot[]
+  enrollments     Enrollment[]
+  teacherAssigns  ClassTeacherAssignment[]
+  lessons         Lesson[]
+  attendance      Attendance[]
+  files           FileAsset[]
+  materials       EducationalMaterial[]
+  exams           Exam[]
+  examGrades      ExamGrade[]
+  assignments     Assignment[]
+  submissions     AssignmentSubmission[]
+  announcements   Announcement[]
+  notifications   Notification[]
+  auditLogs       AuditLog[]
+  calendarEvents  CalendarEvent[]
 }
 
 model CenterMembership {
@@ -255,14 +256,14 @@ model StudentProfile {
   level          EducationLevel?
   enrollmentDate DateTime        @default(now())
   academicYearId String?
-  notes          String?
+  notes          String?         @db.Text
   archivedAt     DateTime?
   createdAt      DateTime        @default(now())
   updatedAt      DateTime        @updatedAt
 
-  center       TutoringCenter         @relation(fields: [centerId], references: [id], onDelete: Cascade)
-  user         User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
-  academicYear AcademicYear?          @relation(fields: [academicYearId], references: [id], onDelete: SetNull)
+  center       TutoringCenter              @relation(fields: [centerId], references: [id], onDelete: Cascade)
+  user         User                        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  academicYear AcademicYear?               @relation(fields: [academicYearId], references: [id], onDelete: SetNull)
   enrollments  Enrollment[]
   parentLinks  ParentStudentLink[]
   attendance   Attendance[]
@@ -280,7 +281,7 @@ model TeacherProfile {
   centerId   String
   userId     String
   title      String? // e.g. "Μαθηματικός"
-  bio        String?
+  bio        String?   @db.Text
   archivedAt DateTime?
   createdAt  DateTime  @default(now())
   updatedAt  DateTime  @updatedAt
@@ -353,7 +354,7 @@ model ClassGroup {
   centerId       String
   academicYearId String
   subjectId      String
-  name           String // e.g. "Μαθηματικά Γ' Λυκείου – Τμήμα 1"
+  name           String         @db.VarChar(255) // e.g. "Μαθηματικά Γ' Λυκείου – Τμήμα 1"
   level          EducationLevel
   room           String?
   capacity       Int?
@@ -380,7 +381,7 @@ model ClassGroup {
 }
 
 model ClassScheduleSlot {
-  id           String @id @default(cuid())
+  id           String  @id @default(cuid())
   centerId     String
   classGroupId String
   dayOfWeek    Int // 1 = Monday … 7 = Sunday (ISO)
@@ -477,7 +478,7 @@ model FileAsset {
   centerId     String
   uploadedById String?
   storageKey   String   @unique
-  originalName String
+  originalName String   @db.VarChar(255)
   mimeType     String
   sizeBytes    Int
   createdAt    DateTime @default(now())
@@ -499,8 +500,8 @@ model EducationalMaterial {
   classGroupId   String?
   academicYearId String?
   uploadedById   String?
-  title          String
-  description    String?
+  title          String             @db.VarChar(255)
+  description    String?            @db.Text
   category       String? // e.g. "Θεωρία", "Ασκήσεις", "Διαγωνίσματα"
   visibility     MaterialVisibility @default(CLASS)
   createdAt      DateTime           @default(now())
@@ -524,8 +525,8 @@ model Exam {
   classGroupId       String
   subjectId          String
   createdById        String?
-  title              String
-  description        String?
+  title              String     @db.VarChar(255)
+  description        String?    @db.Text
   scheduledAt        DateTime
   durationMinutes    Int        @default(120)
   maxScore           Decimal    @db.Decimal(6, 2)
@@ -551,7 +552,7 @@ model ExamGrade {
   studentId  String
   score      Decimal? @db.Decimal(6, 2)
   absent     Boolean  @default(false)
-  feedback   String?
+  feedback   String?  @db.Text
   gradedById String?
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
@@ -571,12 +572,12 @@ model Assignment {
   centerId     String
   classGroupId String
   createdById  String?
-  title        String
-  instructions String
+  title        String    @db.VarChar(255)
+  instructions String    @db.Text
   dueAt        DateTime
   allowLate    Boolean   @default(true)
   maxScore     Decimal?  @db.Decimal(6, 2)
-  requirements String? // submission requirements shown to students
+  requirements String?   @db.Text // submission requirements shown to students
   publishedAt  DateTime? @default(now())
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
@@ -607,10 +608,10 @@ model AssignmentSubmission {
   assignmentId        String
   studentId           String
   status              SubmissionStatus @default(NOT_STARTED)
-  text                String?
+  text                String?          @db.Text
   submittedAt         DateTime?
   score               Decimal?         @db.Decimal(6, 2)
-  feedback            String?
+  feedback            String?          @db.Text
   reviewedById        String?
   reviewedAt          DateTime?
   feedbackPublishedAt DateTime?
@@ -643,8 +644,8 @@ model Announcement {
   id           String               @id @default(cuid())
   centerId     String
   authorId     String?
-  title        String
-  body         String
+  title        String               @db.VarChar(255)
+  body         String               @db.Text
   audience     AnnouncementAudience @default(CENTER)
   classGroupId String? // required when audience = CLASS
   pinned       Boolean              @default(false)
@@ -677,8 +678,8 @@ model Notification {
   centerId  String?
   userId    String
   type      NotificationType
-  title     String
-  body      String?
+  title     String           @db.VarChar(255)
+  body      String?          @db.Text
   link      String? // in-app route, e.g. "/grades"
   readAt    DateTime?
   createdAt DateTime         @default(now())
@@ -695,8 +696,8 @@ model CalendarEvent {
   centerId     String
   classGroupId String? // null = center-wide
   createdById  String?
-  title        String
-  description  String?
+  title        String            @db.VarChar(255)
+  description  String?           @db.Text
   type         CalendarEventType @default(EVENT)
   startsAt     DateTime
   endsAt       DateTime

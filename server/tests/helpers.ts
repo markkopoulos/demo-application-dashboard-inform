@@ -17,6 +17,9 @@ export async function resetDb() {
   await prisma.notification.deleteMany();
   await prisma.session.deleteMany();
   await prisma.passwordResetToken.deleteMany();
+  // MySQL enforces RESTRICT (ClassGroup → Subject/AcademicYear) mid-cascade,
+  // so remove classes (which cascade exams, lessons, …) before their centers.
+  await prisma.classGroup.deleteMany();
   await prisma.tutoringCenter.deleteMany();
   await prisma.user.deleteMany();
 }

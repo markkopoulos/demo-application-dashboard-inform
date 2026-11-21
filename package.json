@@ -19,7 +19,7 @@
     "db:deploy": "npm run db:deploy -w server",
     "db:seed": "npm run db:seed -w server",
     "db:reset": "npm run db:reset -w server",
-    "start:prod": "npm run db:deploy && npm start",
+    "start:prod": "npm run db:deploy && npm run db:seed:if-empty -w server && npm start",
     "typecheck": "npm run typecheck -w server && npm run typecheck -w client"
   },
   "devDependencies": {

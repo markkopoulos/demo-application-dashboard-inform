@@ -3,13 +3,16 @@
  * All people, emails and data are invented. Emails use the reserved
  * `.example` TLD so nothing can ever be delivered to a real inbox.
  *
- * WIPES THE DATABASE. Refuses to run in production unless
- * SEED_ALLOW_PRODUCTION=true is set explicitly.
+ * Two modes (see src/seed/cli.ts):
+ *   - `--if-empty`: inserts demo data only when there are no users yet.
+ *     Safe to run on every start; used by `npm run start:prod` when DEMO_SEED=true.
+ *   - default: WIPES THE DATABASE and reseeds. Refuses in production unless
+ *     SEED_ALLOW_PRODUCTION=true is set explicitly.
  */
 import { PrismaClient, type EducationLevel, type TeacherProfile } from "@prisma/client";
 import argon2 from "argon2";
 
-const prisma = new PrismaClient();
+let prisma: PrismaClient;
 
 export const DEMO_PASSWORD = "EduCore2026!";
 
@@ -70,16 +73,17 @@ async function wipe() {
   await prisma.notification.deleteMany();
   await prisma.session.deleteMany();
   await prisma.passwordResetToken.deleteMany();
+  // MySQL enforces RESTRICT (ClassGroup → Subject/AcademicYear) mid-cascade,
+  // so remove classes (which cascade exams, lessons, …) before their centers.
+  await prisma.classGroup.deleteMany();
   await prisma.tutoringCenter.deleteMany();
   await prisma.user.deleteMany();
 }
 
-async function main() {
-  if (process.env.NODE_ENV === "production" && process.env.SEED_ALLOW_PRODUCTION !== "true") {
-    throw new Error("Refusing to seed (and wipe) a production database. Set SEED_ALLOW_PRODUCTION=true to override.");
-  }
+export async function seedDemo(client: PrismaClient, { wipeFirst }: { wipeFirst: boolean }) {
+  prisma = client;
   console.log("Seeding EduCore demo data…");
-  await wipe();
+  if (wipeFirst) await wipe();
 
   const passwordHash = await argon2.hash(DEMO_PASSWORD, { type: argon2.argon2id, memoryCost: 19456, timeCost: 2, parallelism: 1 });
   const domain = "akadimia.example";
@@ -273,9 +277,3 @@ async function main() {
   console.log(`Demo password for every account: ${DEMO_PASSWORD}`);
 }
 
-main()
-  .catch((err) => {
-    console.error(err);
-    process.exitCode = 1;
-  })
-  .finally(() => prisma.$disconnect());
