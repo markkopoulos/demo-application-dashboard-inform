@@ -1,0 +1,733 @@
+// EduCore database schema
+// ---------------------------------------------------------------------------
+// Tenancy model: every center-owned record carries `centerId`. All queries in
+// the API layer are scoped by the caller's active center (see
+// src/middleware/auth.ts). A `User` is a global identity; its role inside a
+// center comes from `CenterMembership`. SUPER_ADMIN is a platform role stored
+// on the user itself.
+// ---------------------------------------------------------------------------
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Enums ─────────────────────────────────────────────────────────────────
+
+enum Role {
+  SUPER_ADMIN
+  CENTER_ADMIN
+  TEACHER
+  STUDENT
+  PARENT
+}
+
+enum PlatformRole {
+  SUPER_ADMIN
+}
+
+enum UserStatus {
+  ACTIVE
+  SUSPENDED
+  ARCHIVED
+}
+
+enum CenterStatus {
+  ACTIVE
+  INACTIVE
+}
+
+enum MembershipStatus {
+  ACTIVE
+  SUSPENDED
+  ARCHIVED
+}
+
+enum EducationLevel {
+  GYM_A // Α' Γυμνασίου
+  GYM_B // Β' Γυμνασίου
+  GYM_C // Γ' Γυμνασίου
+  LYK_A // Α' Λυκείου
+  LYK_B // Β' Λυκείου
+  LYK_C // Γ' Λυκείου
+}
+
+enum EnrollmentStatus {
+  ACTIVE
+  DROPPED
+}
+
+enum LessonStatus {
+  SCHEDULED
+  COMPLETED
+  CANCELLED
+}
+
+enum AttendanceStatus {
+  PRESENT
+  ABSENT
+  LATE
+  EXCUSED
+}
+
+enum GradeScale {
+  SCALE_20 // Greek 0–20 scale
+  PERCENT // 0–100%
+}
+
+enum ExamStatus {
+  SCHEDULED
+  COMPLETED
+  CANCELLED
+}
+
+enum SubmissionStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  SUBMITTED
+  LATE
+  REVIEWED
+}
+
+enum MaterialVisibility {
+  CLASS // students enrolled in the class (+ staff)
+  CENTER // everyone in the center
+  STAFF // teachers & admins only
+}
+
+enum AnnouncementAudience {
+  CENTER
+  CLASS
+  STUDENTS
+  PARENTS
+  TEACHERS
+}
+
+enum CalendarEventType {
+  EVENT
+  HOLIDAY
+}
+
+enum NotificationType {
+  ANNOUNCEMENT
+  GRADE_PUBLISHED
+  MATERIAL_UPLOADED
+  EXAM_SCHEDULED
+  ASSIGNMENT_CREATED
+  ASSIGNMENT_REVIEWED
+  ATTENDANCE
+  SYSTEM
+}
+
+// ─── Identity & sessions ───────────────────────────────────────────────────
+
+model User {
+  id           String        @id @default(cuid())
+  email        String        @unique
+  passwordHash String
+  firstName    String
+  lastName     String
+  phone        String?
+  avatarUrl    String?
+  locale       String        @default("el")
+  status       UserStatus    @default(ACTIVE)
+  platformRole PlatformRole?
+  lastLoginAt  DateTime?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  sessions            Session[]
+  passwordResetTokens PasswordResetToken[]
+  memberships         CenterMembership[]
+  studentProfiles     StudentProfile[]
+  teacherProfiles     TeacherProfile[]
+  parentLinks         ParentStudentLink[]
+  notifications       Notification[]
+  auditLogs           AuditLog[]           @relation("AuditActor")
+  announcements       Announcement[]
+  uploadedFiles       FileAsset[]
+  calendarEvents      CalendarEvent[]
+
+  @@index([status])
+}
+
+model Session {
+  id                String    @id @default(cuid())
+  tokenHash         String    @unique
+  csrfToken         String
+  userId            String
+  activeCenterId    String?
+  ip                String?
+  userAgent         String?
+  expiresAt         DateTime // idle expiry (sliding)
+  absoluteExpiresAt DateTime // hard cap regardless of activity
+  lastSeenAt        DateTime  @default(now())
+  createdAt         DateTime  @default(now())
+
+  user         User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  activeCenter TutoringCenter? @relation(fields: [activeCenterId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+model PasswordResetToken {
+  id        String    @id @default(cuid())
+  tokenHash String    @unique
+  userId    String
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+// ─── Tenancy ───────────────────────────────────────────────────────────────
+
+model TutoringCenter {
+  id                String       @id @default(cuid())
+  name              String
+  slug              String       @unique
+  city              String?
+  address           String?
+  phone             String?
+  email             String?
+  timezone          String       @default("Europe/Athens")
+  defaultGradeScale GradeScale   @default(SCALE_20)
+  status            CenterStatus @default(ACTIVE)
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+
+  sessions          Session[]
+  memberships       CenterMembership[]
+  studentProfiles   StudentProfile[]
+  teacherProfiles   TeacherProfile[]
+  parentLinks       ParentStudentLink[]
+  subjects          Subject[]
+  academicYears     AcademicYear[]
+  classGroups       ClassGroup[]
+  scheduleSlots     ClassScheduleSlot[]
+  enrollments       Enrollment[]
+  teacherAssigns    ClassTeacherAssignment[]
+  lessons           Lesson[]
+  attendance        Attendance[]
+  files             FileAsset[]
+  materials         EducationalMaterial[]
+  exams             Exam[]
+  examGrades        ExamGrade[]
+  assignments       Assignment[]
+  submissions       AssignmentSubmission[]
+  announcements     Announcement[]
+  notifications     Notification[]
+  auditLogs         AuditLog[]
+  calendarEvents    CalendarEvent[]
+}
+
+model CenterMembership {
+  id        String           @id @default(cuid())
+  userId    String
+  centerId  String
+  role      Role // CENTER_ADMIN | TEACHER | STUDENT | PARENT
+  status    MembershipStatus @default(ACTIVE)
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+
+  user   User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  center TutoringCenter @relation(fields: [centerId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, centerId])
+  @@index([centerId, role])
+}
+
+// ─── People ────────────────────────────────────────────────────────────────
+
+model StudentProfile {
+  id             String          @id @default(cuid())
+  centerId       String
+  userId         String
+  studentCode    String
+  level          EducationLevel?
+  enrollmentDate DateTime        @default(now())
+  academicYearId String?
+  notes          String?
+  archivedAt     DateTime?
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+
+  center       TutoringCenter         @relation(fields: [centerId], references: [id], onDelete: Cascade)
+  user         User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  academicYear AcademicYear?          @relation(fields: [academicYearId], references: [id], onDelete: SetNull)
+  enrollments  Enrollment[]
+  parentLinks  ParentStudentLink[]
+  attendance   Attendance[]
+  examGrades   ExamGrade[]
+  submissions  AssignmentSubmission[]
+  annTargets   AnnouncementStudentTarget[]
+
+  @@unique([centerId, userId])
+  @@unique([centerId, studentCode])
+  @@index([centerId, archivedAt])
+}
+
+model TeacherProfile {
+  id         String    @id @default(cuid())
+  centerId   String
+  userId     String
+  title      String? // e.g. "Μαθηματικός"
+  bio        String?
+  archivedAt DateTime?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  center      TutoringCenter           @relation(fields: [centerId], references: [id], onDelete: Cascade)
+  user        User                     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  assignments ClassTeacherAssignment[]
+  lessons     Lesson[]
+  subjects    Subject[]                @relation("TeacherSubjects")
+
+  @@unique([centerId, userId])
+}
+
+model ParentStudentLink {
+  id           String   @id @default(cuid())
+  centerId     String
+  parentUserId String
+  studentId    String
+  relationship String? // e.g. "Μητέρα", "Πατέρας"
+  createdAt    DateTime @default(now())
+
+  center  TutoringCenter @relation(fields: [centerId], references: [id], onDelete: Cascade)
+  parent  User           @relation(fields: [parentUserId], references: [id], onDelete: Cascade)
+  student StudentProfile @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@unique([parentUserId, studentId])
+  @@index([centerId])
+  @@index([studentId])
+}
+
+// ─── Academic structure ────────────────────────────────────────────────────
+
+model Subject {
+  id        String   @id @default(cuid())
+  centerId  String
+  name      String
+  code      String?
+  color     String? // hex, used for chips & calendar
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  center    TutoringCenter        @relation(fields: [centerId], references: [id], onDelete: Cascade)
+  classes   ClassGroup[]
+  materials EducationalMaterial[]
+  exams     Exam[]
+  teachers  TeacherProfile[]      @relation("TeacherSubjects")
+
+  @@unique([centerId, name])
+}
+
+model AcademicYear {
+  id        String   @id @default(cuid())
+  centerId  String
+  label     String // "2025-2026"
+  startDate DateTime
+  endDate   DateTime
+  isCurrent Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  center    TutoringCenter        @relation(fields: [centerId], references: [id], onDelete: Cascade)
+  classes   ClassGroup[]
+  students  StudentProfile[]
+  materials EducationalMaterial[]
+
+  @@unique([centerId, label])
+}
+
+model ClassGroup {
+  id             String         @id @default(cuid())
+  centerId       String
+  academicYearId String
+  subjectId      String
+  name           String // e.g. "Μαθηματικά Γ' Λυκείου – Τμήμα 1"
+  level          EducationLevel
+  room           String?
+  capacity       Int?
+  color          String?
+  archivedAt     DateTime?
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+
+  center         TutoringCenter           @relation(fields: [centerId], references: [id], onDelete: Cascade)
+  academicYear   AcademicYear             @relation(fields: [academicYearId], references: [id], onDelete: Restrict)
+  subject        Subject                  @relation(fields: [subjectId], references: [id], onDelete: Restrict)
+  scheduleSlots  ClassScheduleSlot[]
+  enrollments    Enrollment[]
+  teachers       ClassTeacherAssignment[]
+  lessons        Lesson[]
+  materials      EducationalMaterial[]
+  exams          Exam[]
+  assignments    Assignment[]
+  announcements  Announcement[]
+  calendarEvents CalendarEvent[]
+
+  @@unique([centerId, academicYearId, name])
+  @@index([centerId, archivedAt])
+}
+
+model ClassScheduleSlot {
+  id           String @id @default(cuid())
+  centerId     String
+  classGroupId String
+  dayOfWeek    Int // 1 = Monday … 7 = Sunday (ISO)
+  startTime    String // "17:00"
+  endTime      String // "18:30"
+  room         String?
+
+  center     TutoringCenter @relation(fields: [centerId], references: [id], onDelete: Cascade)
+  classGroup ClassGroup     @relation(fields: [classGroupId], references: [id], onDelete: Cascade)
+
+  @@index([classGroupId])
+}
+
+model Enrollment {
+  id           String           @id @default(cuid())
+  centerId     String
+  classGroupId String
+  studentId    String
+  status       EnrollmentStatus @default(ACTIVE)
+  enrolledAt   DateTime         @default(now())
+
+  center     TutoringCenter @relation(fields: [centerId], references: [id], onDelete: Cascade)
+  classGroup ClassGroup     @relation(fields: [classGroupId], references: [id], onDelete: Cascade)
+  student    StudentProfile @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@unique([classGroupId, studentId])
+  @@index([centerId])
+  @@index([studentId])
+}
+
+model ClassTeacherAssignment {
+  id           String   @id @default(cuid())
+  centerId     String
+  classGroupId String
+  teacherId    String
+  isPrimary    Boolean  @default(true)
+  createdAt    DateTime @default(now())
+
+  center     TutoringCenter @relation(fields: [centerId], references: [id], onDelete: Cascade)
+  classGroup ClassGroup     @relation(fields: [classGroupId], references: [id], onDelete: Cascade)
+  teacher    TeacherProfile @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+
+  @@unique([classGroupId, teacherId])
+  @@index([teacherId])
+}
+
+model Lesson {
+  id           String       @id @default(cuid())
+  centerId     String
+  classGroupId String
+  teacherId    String?
+  startsAt     DateTime
+  endsAt       DateTime
+  room         String?
+  topic        String?
+  status       LessonStatus @default(SCHEDULED)
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  center     TutoringCenter  @relation(fields: [centerId], references: [id], onDelete: Cascade)
+  classGroup ClassGroup      @relation(fields: [classGroupId], references: [id], onDelete: Cascade)
+  teacher    TeacherProfile? @relation(fields: [teacherId], references: [id], onDelete: SetNull)
+  attendance Attendance[]
+
+  @@index([centerId, startsAt])
+  @@index([classGroupId, startsAt])
+}
+
+model Attendance {
+  id           String           @id @default(cuid())
+  centerId     String
+  lessonId     String
+  studentId    String
+  status       AttendanceStatus
+  note         String?
+  recordedById String?
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+
+  center  TutoringCenter @relation(fields: [centerId], references: [id], onDelete: Cascade)
+  lesson  Lesson         @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  student StudentProfile @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@unique([lessonId, studentId]) // no duplicate attendance per lesson
+  @@index([centerId, studentId])
+}
+
+// ─── Files & materials ─────────────────────────────────────────────────────
+
+// Every stored object goes through FileAsset so authorization is decided in
+// one place. `storageKey` is server-generated; original names are metadata.
+model FileAsset {
+  id           String   @id @default(cuid())
+  centerId     String
+  uploadedById String?
+  storageKey   String   @unique
+  originalName String
+  mimeType     String
+  sizeBytes    Int
+  createdAt    DateTime @default(now())
+
+  center          TutoringCenter         @relation(fields: [centerId], references: [id], onDelete: Cascade)
+  uploadedBy      User?                  @relation(fields: [uploadedById], references: [id], onDelete: SetNull)
+  material        EducationalMaterial?
+  assignmentFiles AssignmentAttachment[]
+  submissionFiles SubmissionFile[]
+
+  @@index([centerId])
+}
+
+model EducationalMaterial {
+  id             String             @id @default(cuid())
+  centerId       String
+  fileId         String             @unique
+  subjectId      String?
+  classGroupId   String?
+  academicYearId String?
+  uploadedById   String?
+  title          String
+  description    String?
+  category       String? // e.g. "Θεωρία", "Ασκήσεις", "Διαγωνίσματα"
+  visibility     MaterialVisibility @default(CLASS)
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @updatedAt
+
+  center       TutoringCenter @relation(fields: [centerId], references: [id], onDelete: Cascade)
+  file         FileAsset      @relation(fields: [fileId], references: [id], onDelete: Cascade)
+  subject      Subject?       @relation(fields: [subjectId], references: [id], onDelete: SetNull)
+  classGroup   ClassGroup?    @relation(fields: [classGroupId], references: [id], onDelete: SetNull)
+  academicYear AcademicYear?  @relation(fields: [academicYearId], references: [id], onDelete: SetNull)
+
+  @@index([centerId, classGroupId])
+  @@index([centerId, subjectId])
+}
+
+// ─── Exams & grades ────────────────────────────────────────────────────────
+
+model Exam {
+  id                 String     @id @default(cuid())
+  centerId           String
+  classGroupId       String
+  subjectId          String
+  createdById        String?
+  title              String
+  description        String?
+  scheduledAt        DateTime
+  durationMinutes    Int        @default(120)
+  maxScore           Decimal    @db.Decimal(6, 2)
+  gradeScale         GradeScale @default(SCALE_20)
+  status             ExamStatus @default(SCHEDULED)
+  resultsPublishedAt DateTime? // null = grades are drafts, hidden from students/parents
+  createdAt          DateTime   @default(now())
+  updatedAt          DateTime   @updatedAt
+
+  center     TutoringCenter @relation(fields: [centerId], references: [id], onDelete: Cascade)
+  classGroup ClassGroup     @relation(fields: [classGroupId], references: [id], onDelete: Cascade)
+  subject    Subject        @relation(fields: [subjectId], references: [id], onDelete: Restrict)
+  grades     ExamGrade[]
+
+  @@index([centerId, scheduledAt])
+  @@index([classGroupId])
+}
+
+model ExamGrade {
+  id         String   @id @default(cuid())
+  centerId   String
+  examId     String
+  studentId  String
+  score      Decimal? @db.Decimal(6, 2)
+  absent     Boolean  @default(false)
+  feedback   String?
+  gradedById String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  center  TutoringCenter @relation(fields: [centerId], references: [id], onDelete: Cascade)
+  exam    Exam           @relation(fields: [examId], references: [id], onDelete: Cascade)
+  student StudentProfile @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@unique([examId, studentId])
+  @@index([centerId, studentId])
+}
+
+// ─── Assignments ───────────────────────────────────────────────────────────
+
+model Assignment {
+  id           String    @id @default(cuid())
+  centerId     String
+  classGroupId String
+  createdById  String?
+  title        String
+  instructions String
+  dueAt        DateTime
+  allowLate    Boolean   @default(true)
+  maxScore     Decimal?  @db.Decimal(6, 2)
+  requirements String? // submission requirements shown to students
+  publishedAt  DateTime? @default(now())
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  center      TutoringCenter         @relation(fields: [centerId], references: [id], onDelete: Cascade)
+  classGroup  ClassGroup             @relation(fields: [classGroupId], references: [id], onDelete: Cascade)
+  attachments AssignmentAttachment[]
+  submissions AssignmentSubmission[]
+
+  @@index([centerId, dueAt])
+  @@index([classGroupId])
+}
+
+model AssignmentAttachment {
+  id           String @id @default(cuid())
+  assignmentId String
+  fileId       String
+
+  assignment Assignment @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+  file       FileAsset  @relation(fields: [fileId], references: [id], onDelete: Cascade)
+
+  @@unique([assignmentId, fileId])
+}
+
+model AssignmentSubmission {
+  id                  String           @id @default(cuid())
+  centerId            String
+  assignmentId        String
+  studentId           String
+  status              SubmissionStatus @default(NOT_STARTED)
+  text                String?
+  submittedAt         DateTime?
+  score               Decimal?         @db.Decimal(6, 2)
+  feedback            String?
+  reviewedById        String?
+  reviewedAt          DateTime?
+  feedbackPublishedAt DateTime?
+  createdAt           DateTime         @default(now())
+  updatedAt           DateTime         @updatedAt
+
+  center     TutoringCenter   @relation(fields: [centerId], references: [id], onDelete: Cascade)
+  assignment Assignment       @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+  student    StudentProfile   @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  files      SubmissionFile[]
+
+  @@unique([assignmentId, studentId])
+  @@index([centerId, studentId])
+}
+
+model SubmissionFile {
+  id           String @id @default(cuid())
+  submissionId String
+  fileId       String
+
+  submission AssignmentSubmission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+  file       FileAsset            @relation(fields: [fileId], references: [id], onDelete: Cascade)
+
+  @@unique([submissionId, fileId])
+}
+
+// ─── Communication ─────────────────────────────────────────────────────────
+
+model Announcement {
+  id           String               @id @default(cuid())
+  centerId     String
+  authorId     String?
+  title        String
+  body         String
+  audience     AnnouncementAudience @default(CENTER)
+  classGroupId String? // required when audience = CLASS
+  pinned       Boolean              @default(false)
+  publishedAt  DateTime             @default(now())
+  createdAt    DateTime             @default(now())
+  updatedAt    DateTime             @updatedAt
+
+  center         TutoringCenter              @relation(fields: [centerId], references: [id], onDelete: Cascade)
+  author         User?                       @relation(fields: [authorId], references: [id], onDelete: SetNull)
+  classGroup     ClassGroup?                 @relation(fields: [classGroupId], references: [id], onDelete: Cascade)
+  studentTargets AnnouncementStudentTarget[]
+
+  @@index([centerId, publishedAt])
+}
+
+// Used when audience = STUDENTS (specific students; their linked parents see it too)
+model AnnouncementStudentTarget {
+  id             String @id @default(cuid())
+  announcementId String
+  studentId      String
+
+  announcement Announcement   @relation(fields: [announcementId], references: [id], onDelete: Cascade)
+  student      StudentProfile @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@unique([announcementId, studentId])
+}
+
+model Notification {
+  id        String           @id @default(cuid())
+  centerId  String?
+  userId    String
+  type      NotificationType
+  title     String
+  body      String?
+  link      String? // in-app route, e.g. "/grades"
+  readAt    DateTime?
+  createdAt DateTime         @default(now())
+
+  center TutoringCenter? @relation(fields: [centerId], references: [id], onDelete: Cascade)
+  user   User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, readAt])
+  @@index([userId, createdAt])
+}
+
+model CalendarEvent {
+  id           String            @id @default(cuid())
+  centerId     String
+  classGroupId String? // null = center-wide
+  createdById  String?
+  title        String
+  description  String?
+  type         CalendarEventType @default(EVENT)
+  startsAt     DateTime
+  endsAt       DateTime
+  allDay       Boolean           @default(false)
+  cancelledAt  DateTime?
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+
+  center     TutoringCenter @relation(fields: [centerId], references: [id], onDelete: Cascade)
+  classGroup ClassGroup?    @relation(fields: [classGroupId], references: [id], onDelete: Cascade)
+  createdBy  User?          @relation(fields: [createdById], references: [id], onDelete: SetNull)
+
+  @@index([centerId, startsAt])
+}
+
+// ─── Audit ─────────────────────────────────────────────────────────────────
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  centerId   String?
+  actorId    String?
+  action     String // e.g. "auth.login", "student.archive", "grades.publish"
+  entityType String?
+  entityId   String?
+  metadata   Json?
+  ip         String?
+  createdAt  DateTime @default(now())
+
+  center TutoringCenter? @relation(fields: [centerId], references: [id], onDelete: Cascade)
+  actor  User?           @relation("AuditActor", fields: [actorId], references: [id], onDelete: SetNull)
+
+  @@index([centerId, createdAt])
+  @@index([actorId])
+}
