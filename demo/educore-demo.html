@@ -1,0 +1,606 @@
+<!doctype html>
+<html lang="el">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>EduCore — Demo</title>
+<style>
+:root{
+  --bg:#f6f8fc;--surface:#eef1f7;--card:#fff;--fg:#0f172a;--muted:#64748b;--border:#e3e8f0;
+  --primary:#101b3d;--primary-fg:#fff;--accent:#4f46e5;--accent-soft:#eef0ff;
+  --success:#0f8a5f;--success-soft:#e8f8f1;--warning:#c2700a;--warning-soft:#fff6e5;--danger:#dc2626;--danger-soft:#fdecec;
+  --sidebar:#fff;--shadow:0 1px 2px rgba(15,23,42,.04),0 1px 3px rgba(15,23,42,.05);--shadow-lg:0 10px 30px -8px rgba(15,23,42,.18);
+  --r:12px;
+}
+html.dark{
+  --bg:#0c111d;--surface:#1a2133;--card:#131a2a;--fg:#e8ecf4;--muted:#94a0b8;--border:#242d42;
+  --primary:#dfe4ff;--primary-fg:#101b3d;--accent:#8b85ff;--accent-soft:#252a52;
+  --success:#34c48f;--success-soft:#123327;--warning:#f3b04b;--warning-soft:#3a2c12;--danger:#f26b6b;--danger-soft:#3a1717;
+  --sidebar:#0f1524;--shadow:none;--shadow-lg:0 10px 30px -8px rgba(0,0,0,.6);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Inter,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;background:var(--bg);color:var(--fg);font-size:14px;line-height:1.45;-webkit-font-smoothing:antialiased}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+input,select{font:inherit;color:inherit}
+svg.i{width:18px;height:18px;flex-shrink:0;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.muted{color:var(--muted)} .tab{font-variant-numeric:tabular-nums}
+.hidden{display:none!important}
+
+/* ── Login ── */
+#login{display:grid;grid-template-columns:1.05fr 1fr;min-height:100vh}
+.hero{position:relative;overflow:hidden;background:#0b1430;color:#fff;padding:48px;display:flex;flex-direction:column}
+.hero:before{content:"";position:absolute;inset:0;opacity:.07;background-image:linear-gradient(#fff 1px,transparent 1px),linear-gradient(90deg,#fff 1px,transparent 1px);background-size:44px 44px}
+.blob{position:absolute;border-radius:50%;filter:blur(70px)}
+.hero h1{font-size:38px;line-height:1.15;letter-spacing:-.02em;font-weight:650;margin-bottom:18px}
+.hero p{color:#c7cdf5;font-size:16px;max-width:30em}
+.hero ul{list-style:none;margin-top:24px;display:grid;gap:12px}
+.hero li{display:flex;gap:10px;align-items:center;color:#e6e9ff}
+.hero li svg{color:#a5b4fc}
+.brand{display:flex;align-items:center;gap:10px;font-weight:650;font-size:17px;position:relative}
+.formside{display:flex;align-items:center;justify-content:center;padding:32px 16px}
+.formbox{width:100%;max-width:370px}
+.formbox h2{font-size:26px;letter-spacing:-.02em;font-weight:650}
+.field{display:grid;gap:6px;margin-top:16px}
+.field label{font-weight:550;font-size:13px}
+.input{height:42px;border:1px solid var(--border);border-radius:10px;padding:0 12px;background:var(--card);outline:none;width:100%}
+.input:focus{border-color:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 20%,transparent)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:40px;padding:0 16px;border-radius:10px;font-weight:550;transition:.15s;white-space:nowrap}
+.btn-primary{background:var(--primary);color:var(--primary-fg)} .btn-primary:hover{opacity:.92}
+.btn-accent{background:var(--accent);color:#fff}
+.btn-outline{border:1px solid var(--border);background:var(--card)} .btn-outline:hover{background:var(--surface)}
+.btn-ghost:hover{background:var(--surface)}
+.btn-sm{height:32px;padding:0 12px;font-size:12.5px;border-radius:8px}
+.btn-block{width:100%;height:44px;margin-top:20px}
+.demo-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
+.demo-grid button{display:flex;align-items:center;gap:8px;padding:10px 12px;border:1px solid var(--border);border-radius:10px;background:var(--card);font-size:12.5px;font-weight:550;text-align:left}
+.demo-grid button:hover{border-color:color-mix(in srgb,var(--accent) 40%,transparent);background:var(--accent-soft)}
+.demo-grid button svg{color:var(--accent)}
+.demo-grid button:last-child{grid-column:span 2}
+.divider{display:flex;align-items:center;gap:12px;margin-top:36px;font-size:12px;color:var(--muted)}
+.divider:before,.divider:after{content:"";height:1px;background:var(--border);flex:1}
+
+/* ── Shell ── */
+#app{min-height:100vh}
+.sidebar{position:fixed;inset:0 auto 0 0;width:256px;background:var(--sidebar);border-right:1px solid var(--border);display:flex;flex-direction:column;z-index:30}
+.sidebar .top{height:64px;display:flex;align-items:center;padding:0 20px}
+.brand-sub{font-size:12px;color:var(--muted);font-weight:450}
+nav{flex:1;overflow-y:auto;padding:12px}
+.nav-sec{font-size:11px;font-weight:650;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);padding:14px 12px 6px}
+.nav-item{display:flex;align-items:center;gap:12px;width:100%;padding:9px 12px;border-radius:10px;font-weight:520;color:var(--muted);text-align:left}
+.nav-item:hover{background:var(--surface);color:var(--fg)}
+.nav-item.active{background:var(--primary);color:var(--primary-fg);box-shadow:var(--shadow)}
+.nav-item .count{margin-left:auto;font-size:11px;background:var(--danger);color:#fff;border-radius:10px;padding:0 7px;font-weight:650}
+.main{padding-left:256px}
+header{position:sticky;top:0;z-index:20;height:64px;display:flex;align-items:center;gap:10px;padding:0 24px;border-bottom:1px solid var(--border);background:color-mix(in srgb,var(--bg) 85%,transparent);backdrop-filter:blur(10px)}
+.search{display:flex;align-items:center;gap:8px;height:38px;border:1px solid var(--border);border-radius:10px;padding:0 12px;background:var(--card);width:min(340px,100%);color:var(--muted)}
+.search input{border:0;outline:0;background:none;width:100%}
+.icon-btn{width:38px;height:38px;border-radius:10px;display:inline-flex;align-items:center;justify-content:center;color:var(--muted);position:relative}
+.icon-btn:hover{background:var(--surface);color:var(--fg)}
+.dot{position:absolute;top:8px;right:9px;width:8px;height:8px;border-radius:50%;background:var(--danger);border:2px solid var(--bg)}
+.avatar{width:36px;height:36px;border-radius:50%;background:var(--accent-soft);color:var(--accent);font-weight:650;font-size:12.5px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.user{display:flex;align-items:center;gap:10px;padding:3px 8px 3px 3px;border-radius:10px;position:relative}
+.user:hover{background:var(--surface)}
+.user .nm{font-weight:600;font-size:13px;line-height:1.2;text-align:left} .user .rl{font-size:12px;color:var(--muted);text-align:left}
+.menu{position:absolute;right:0;top:46px;min-width:220px;background:var(--card);border:1px solid var(--border);border-radius:12px;box-shadow:var(--shadow-lg);padding:6px;z-index:50}
+.menu .lbl{font-size:11.5px;color:var(--muted);padding:6px 10px;font-weight:600}
+.menu button{display:flex;align-items:center;gap:10px;width:100%;padding:8px 10px;border-radius:8px;text-align:left;font-size:13px}
+.menu button:hover{background:var(--surface)} .menu hr{border:0;border-top:1px solid var(--border);margin:6px 0}
+.menu .on{color:var(--accent);font-weight:600}
+.content{max-width:1240px;margin:0 auto;padding:28px 24px 48px}
+.page-h{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;margin-bottom:22px;flex-wrap:wrap}
+.page-h h1{font-size:25px;letter-spacing:-.02em;font-weight:650}
+.page-h p{color:var(--muted);margin-top:4px}
+.burger{display:none}
+.scrim{display:none}
+
+/* ── Components ── */
+.grid{display:grid;gap:18px}
+.g4{grid-template-columns:repeat(4,minmax(0,1fr))} .g3{grid-template-columns:repeat(3,minmax(0,1fr))} .g2{grid-template-columns:repeat(2,minmax(0,1fr))}
+.span2{grid-column:span 2}
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);box-shadow:var(--shadow);min-width:0}
+.card-h{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:18px 20px 10px}
+.card-h h3{font-size:15px;font-weight:620}
+.card-b{padding:6px 20px 20px}
+.link{color:var(--accent);font-weight:600;font-size:12.5px}
+.stat{padding:18px 20px}
+.stat .top{display:flex;justify-content:space-between;gap:10px}
+.stat .v{font-size:30px;font-weight:650;letter-spacing:-.02em;margin-top:2px}
+.stat .ic{width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center}
+.stat .h{font-size:12px;margin-top:10px;color:var(--muted)}
+.t-accent{background:var(--accent-soft);color:var(--accent)} .t-success{background:var(--success-soft);color:var(--success)}
+.t-warning{background:var(--warning-soft);color:var(--warning)} .t-danger{background:var(--danger-soft);color:var(--danger)}
+.t-violet{background:color-mix(in srgb,#8b5cf6 13%,var(--card));color:#8b5cf6}
+.badge{display:inline-flex;align-items:center;gap:4px;font-size:11.5px;font-weight:600;padding:2px 8px;border-radius:6px;white-space:nowrap}
+.b-muted{background:var(--surface);color:var(--muted)}
+.up{color:var(--success);font-weight:600}
+table{width:100%;border-collapse:collapse}
+th{font-size:11.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);text-align:left;font-weight:600;padding:10px 12px;background:var(--surface)}
+th:first-child{border-radius:8px 0 0 8px} th:last-child{border-radius:0 8px 8px 0}
+td{padding:12px;border-bottom:1px solid var(--border);vertical-align:middle}
+tr:last-child td{border-bottom:0}
+.table-wrap{overflow-x:auto}
+.person{display:flex;align-items:center;gap:10px} .person .avatar{width:32px;height:32px;font-size:11.5px}
+.list{display:grid;gap:10px;grid-template-columns:minmax(0,1fr)}
+.row{display:flex;align-items:center;gap:12px;padding:12px;border:1px solid var(--border);border-radius:10px}
+.bar{width:4px;align-self:stretch;border-radius:4px;flex-shrink:0}
+.grow{flex:1;min-width:0} .trunc{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.small{font-size:12px} .fw{font-weight:600}
+.progress{height:6px;background:var(--surface);border-radius:6px;overflow:hidden} .progress>i{display:block;height:100%;border-radius:6px}
+
+/* schedule */
+.week{display:grid;grid-template-columns:repeat(5,minmax(120px,1fr));gap:8px;overflow-x:auto}
+.day{background:var(--surface);border-radius:10px;padding:8px;min-width:120px}
+.day.today{background:var(--accent-soft);outline:1px solid color-mix(in srgb,var(--accent) 25%,transparent)}
+.day h4{font-size:12px;font-weight:650;color:var(--muted);padding:0 4px 8px}
+.day.today h4{color:var(--accent)}
+.lesson{background:var(--card);border-radius:8px;padding:8px;border-left:3px solid;box-shadow:var(--shadow);margin-bottom:6px}
+.lesson b{display:block;font-size:12px;font-weight:600;line-height:1.25}
+.lesson span{font-size:11px;color:var(--muted)}
+
+/* chart */
+.bars{display:flex;align-items:flex-end;gap:10px;height:220px;padding-top:20px}
+.bars .col{flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;height:100%;justify-content:flex-end;min-width:0}
+.bars .b{width:100%;max-width:46px;border-radius:7px 7px 3px 3px;background:linear-gradient(180deg,#7c83ff,#4f46e5);position:relative}
+.bars .b.low{background:linear-gradient(180deg,#a8b1c6,#7d879e)}
+.bars .b em{position:absolute;top:-20px;left:50%;transform:translateX(-50%);font-style:normal;font-size:11px;font-weight:650;color:var(--muted)}
+.bars .lb{font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.donut{width:120px;height:120px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.donut>div{width:88px;height:88px;border-radius:50%;background:var(--card);display:flex;flex-direction:column;align-items:center;justify-content:center}
+.donut b{font-size:22px;font-weight:700}
+.legend{display:grid;gap:8px} .legend span{display:flex;align-items:center;gap:8px;font-size:13px}
+.legend i{width:10px;height:10px;border-radius:3px}
+
+.student-hero{position:relative;overflow:hidden;border-radius:18px;background:#0b1430;color:#fff;padding:34px 32px;box-shadow:var(--shadow-lg)}
+.student-hero h1{font-size:36px;letter-spacing:-.02em;font-weight:650;margin-top:14px;position:relative}
+.student-hero p{color:#c7cdf5;margin-top:6px;position:relative;max-width:36em}
+.pill{display:inline-block;border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.06);border-radius:7px;padding:4px 10px;font-size:12px;position:relative}
+.chips{display:flex;gap:8px;flex-wrap:wrap}
+.chip{border:1px solid var(--border);background:var(--card);padding:7px 16px;border-radius:99px;font-weight:550}
+.chip.on{background:var(--primary);color:var(--primary-fg);border-color:var(--primary)}
+.att-btns{display:flex;gap:6px;flex-wrap:wrap}
+.att-btns button{font-size:12px;font-weight:600;padding:5px 10px;border-radius:7px;border:1px solid var(--border);background:var(--card)}
+.att-btns button.sel-P{background:var(--success-soft);color:var(--success);border-color:transparent}
+.att-btns button.sel-A{background:var(--danger-soft);color:var(--danger);border-color:transparent}
+.att-btns button.sel-L{background:var(--warning-soft);color:var(--warning);border-color:transparent}
+.att-btns button.sel-E{background:var(--accent-soft);color:var(--accent);border-color:transparent}
+.alert{display:flex;gap:12px;align-items:center;padding:14px;border-radius:12px;border:1px solid var(--border)}
+.alert .ic{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.toast{position:fixed;right:20px;bottom:20px;background:var(--primary);color:var(--primary-fg);padding:12px 16px;border-radius:12px;box-shadow:var(--shadow-lg);font-weight:550;z-index:100;display:flex;gap:8px;align-items:center;animation:pop .25s ease}
+@keyframes pop{from{transform:translateY(8px);opacity:0}}
+.fade{animation:fu .3s ease both} @keyframes fu{from{opacity:0;transform:translateY(6px)}}
+.empty{border:1px dashed var(--border);border-radius:12px;padding:44px 20px;text-align:center;color:var(--muted)}
+.filters{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px}
+.filters .input{height:38px;width:auto;min-width:200px}
+.grade{font-weight:700;font-size:15px}
+.cc{overflow:hidden} .cc .top{height:4px}
+
+@media (max-width:1100px){.g4{grid-template-columns:repeat(2,minmax(0,1fr))}.g3{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:1023px){
+  .sidebar{transform:translateX(-100%);transition:transform .2s;box-shadow:var(--shadow-lg)}
+  .sidebar.open{transform:none}
+  .scrim.open{display:block;position:fixed;inset:0;background:rgba(2,6,23,.45);z-index:25}
+  .main{padding-left:0} .burger{display:inline-flex} .search{display:none}
+  .g3,.g2{grid-template-columns:minmax(0,1fr)} .span2{grid-column:auto}
+}
+@media (max-width:860px){#login{grid-template-columns:1fr}.hero{display:none}}
+@media (max-width:640px){
+  .g4{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+  .content{padding:20px 16px 40px} header{padding:0 12px}
+  .user .nm,.user .rl{display:none} .stat .v{font-size:25px}
+  .student-hero{padding:26px 22px} .student-hero h1{font-size:28px}
+  .page-h h1{font-size:22px} .hide-sm{display:none}
+}
+</style>
+</head>
+<body>
+
+<!-- ═════════ LOGIN ═════════ -->
+<section id="login">
+  <div class="hero">
+    <div class="blob" style="width:420px;height:420px;right:-120px;top:-120px;background:rgba(99,102,241,.35)"></div>
+    <div class="blob" style="width:380px;height:380px;left:-80px;bottom:-160px;background:rgba(124,58,237,.25)"></div>
+    <div class="brand"><span data-logo></span>EduCore</div>
+    <div style="margin-top:auto;position:relative">
+      <h1>Όλο το φροντιστήριό σας,<br>σε μία πλατφόρμα.</h1>
+      <p>Μαθητές, καθηγητές και γονείς συνδεδεμένοι — με βαθμολογίες, παρουσίες, εργασίες και υλικό σε πραγματικό χρόνο.</p>
+      <ul>
+        <li><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>Ασφαλής πρόσβαση ανά ρόλο</li>
+        <li><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>Ελληνικό σύστημα βαθμολόγησης (0–20)</li>
+        <li><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>Πύλη γονέων & μαθητών</li>
+      </ul>
+    </div>
+    <p style="margin-top:48px;font-size:12px;color:#7f88b8;position:relative">© 2026 EduCore · Demo</p>
+  </div>
+  <div class="formside">
+    <div class="formbox fade">
+      <h2>Καλώς ήρθατε</h2>
+      <p class="muted" style="margin-top:6px">Συνδεθείτε στον λογαριασμό σας για να συνεχίσετε.</p>
+      <form id="loginForm">
+        <div class="field"><label for="em">Email</label><input class="input" id="em" type="email" placeholder="you@akadimia.example"></div>
+        <div class="field"><label for="pw">Κωδικός πρόσβασης</label><input class="input" id="pw" type="password" placeholder="••••••••••"></div>
+        <button class="btn btn-primary btn-block" type="submit">Σύνδεση</button>
+      </form>
+      <div class="divider">Λογαριασμοί επίδειξης</div>
+      <div class="demo-grid" id="demoBtns"></div>
+      <p class="muted small" style="text-align:center;margin-top:10px">Πατήστε έναν ρόλο για είσοδο στην επίδειξη.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ═════════ APP ═════════ -->
+<section id="app" class="hidden">
+  <aside class="sidebar" id="sidebar">
+    <div class="top"><div class="brand"><span data-logo></span><div>EduCore<div class="brand-sub" id="centerName">Φροντιστήριο Ακαδημία</div></div></div></div>
+    <nav id="nav"></nav>
+  </aside>
+  <div class="scrim" id="scrim"></div>
+  <div class="main">
+    <header>
+      <button class="icon-btn burger" id="burger" aria-label="Μενού"></button>
+      <label class="search"><span data-i="search"></span><input placeholder="Αναζήτηση μαθητών, τμημάτων…" id="globalSearch"></label>
+      <div style="flex:1"></div>
+      <button class="icon-btn" id="themeBtn" aria-label="Θέμα"></button>
+      <div style="position:relative">
+        <button class="icon-btn" id="bellBtn" aria-label="Ειδοποιήσεις"><span data-i="bell"></span><span class="dot"></span></button>
+        <div class="menu hidden" id="bellMenu" style="width:300px"></div>
+      </div>
+      <div style="position:relative">
+        <button class="user" id="userBtn"><div class="avatar" id="uAv"></div><div><div class="nm" id="uName"></div><div class="rl" id="uRole"></div></div></button>
+        <div class="menu hidden" id="userMenu"></div>
+      </div>
+    </header>
+    <main class="content" id="view"></main>
+  </div>
+</section>
+
+<script>
+/* ═════════ Icons (Lucide-style paths) ═════════ */
+const ICONS={
+  dashboard:'<rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/>',
+  cap:'<path d="M22 10 12 5 2 10l10 5 10-5Z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/>',
+  users:'<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',
+  user:'<circle cx="12" cy="8" r="4"/><path d="M4 21v-1a6 6 0 0 1 6-6h4a6 6 0 0 1 6 6v1"/>',
+  school:'<path d="M14 22v-4a2 2 0 1 0-4 0v4"/><path d="m18 10 4 2v8a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-8l4-2"/><path d="M18 5v17"/><path d="m4 6 8-4 8 4"/><path d="M6 5v17"/><circle cx="12" cy="9" r="2"/>',
+  book:'<path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>',
+  folder:'<path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/>',
+  clipboard:'<rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M12 11h4"/><path d="M12 16h4"/><path d="M8 11h.01"/><path d="M8 16h.01"/>',
+  exam:'<path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="m9 15 2 2 4-4"/>',
+  chart:'<path d="M3 3v18h18"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/>',
+  check:'<rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/><path d="m9 16 2 2 4-4"/>',
+  calendar:'<rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/>',
+  mega:'<path d="m3 11 18-5v12L3 14v-3z"/><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"/>',
+  profile:'<circle cx="12" cy="12" r="10"/><circle cx="12" cy="10" r="3"/><path d="M7 20.66V19a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v1.66"/>',
+  building:'<rect x="4" y="2" width="16" height="20" rx="2"/><path d="M9 22v-4h6v4"/><path d="M8 6h.01M16 6h.01M12 6h.01M12 10h.01M12 14h.01M16 10h.01M16 14h.01M8 10h.01M8 14h.01"/>',
+  baby:'<path d="M9 12h.01M15 12h.01"/><path d="M10 16c.5.3 1.2.5 2 .5s1.5-.2 2-.5"/><path d="M19 6.3a9 9 0 0 1 1.8 3.9 2 2 0 0 1 0 3.6 9 9 0 0 1-17.6 0 2 2 0 0 1 0-3.6A9 9 0 0 1 12 3c2 0 3.5 1.1 3.5 2.5s-.9 2.5-2 2.5c-.8 0-1.5-.4-1.5-1"/>',
+  moon:'<path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>',
+  sun:'<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/>',
+  menu:'<path d="M4 6h16M4 12h16M4 18h16"/>',
+  clock:'<circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>',
+  pin:'<path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/>',
+  search:'<circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>',
+  bell:'<path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/>',
+  logout:'<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5"/><path d="M21 12H9"/>',
+  shield:'<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/><path d="m9 12 2 2 4-4"/>',
+  alert:'<circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/>',
+  ban:'<circle cx="12" cy="12" r="10"/><path d="m4.9 4.9 14.2 14.2"/>',
+  cloud:'<path d="M4 14.9A7 7 0 1 1 15.7 8h1.8a4.5 4.5 0 0 1 2.5 8.2"/><path d="M12 12v9"/><path d="m16 16-4-4-4 4"/>',
+  plus:'<path d="M12 5v14M5 12h14"/>',
+  download:'<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/>',
+  file:'<path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/>',
+  ok:'<path d="M20 6 9 17l-5-5"/>',
+  swap:'<path d="m16 3 4 4-4 4"/><path d="M20 7H4"/><path d="m8 21-4-4 4-4"/><path d="M4 17h16"/>',
+};
+const ic=(n,s)=>`<svg class="i" viewBox="0 0 24 24"${s?` style="width:${s}px;height:${s}px"`:''}>${ICONS[n]||''}</svg>`;
+const LOGO='<svg viewBox="0 0 32 32" width="34" height="34"><rect width="32" height="32" rx="9" fill="#0f1b3d"/><path d="M16 7 5 12.5 16 18l9-4.5V20h2v-7.5L16 7Z" fill="#a5b4fc"/><path d="M9.5 16.2v4.3c0 1.9 2.9 3.5 6.5 3.5s6.5-1.6 6.5-3.5v-4.3L16 19.4l-6.5-3.2Z" fill="#fff"/></svg>';
+document.querySelectorAll('[data-logo]').forEach(e=>e.innerHTML=LOGO);
+const hydrateIcons=root=>root.querySelectorAll('[data-i]').forEach(e=>e.outerHTML=ic(e.dataset.i));
+hydrateIcons(document);
+
+/* ═════════ Demo data (fictional) ═════════ */
+let seed=2026;const rnd=()=>((seed=(seed*1664525+1013904223)%4294967296)/4294967296);
+const LEVELS={GYM_C:"Γ' Γυμνασίου",LYK_A:"Α' Λυκείου",LYK_B:"Β' Λυκείου",LYK_C:"Γ' Λυκείου"};
+const DAYS=["","Δευτέρα","Τρίτη","Τετάρτη","Πέμπτη","Παρασκευή"];
+const TODAY=2; // demo "today" = Τρίτη 24 Νοεμβρίου 2026
+const TEACHERS=[
+  {id:"t1",name:"Γιώργος Παπαδόπουλος",title:"Μαθηματικός"},
+  {id:"t2",name:"Ελένη Κωνσταντίνου",title:"Φυσικός"},
+  {id:"t3",name:"Δημήτρης Αλεξίου",title:"Φιλόλογος"},
+  {id:"t4",name:"Μαρία Νικολάου",title:"Φιλόλογος"},
+  {id:"t5",name:"Κατερίνα Βασιλείου",title:"Ξένες Γλώσσες"},
+];
+const CLASSES=[
+  {id:"c1",name:"Μαθηματικά Γ' Λυκείου",subj:"Μαθηματικά",color:"#2563eb",level:"LYK_C",teacher:"t1",room:"Αίθουσα 1",slots:[[1,"17:00","19:00"],[4,"17:00","19:00"]],att:95},
+  {id:"c2",name:"Μαθηματικά Β' Λυκείου",subj:"Μαθηματικά",color:"#3b82f6",level:"LYK_B",teacher:"t1",room:"Αίθουσα 1",slots:[[2,"16:00","17:30"],[5,"16:00","17:30"]],att:90},
+  {id:"c3",name:"Φυσική Γ' Λυκείου",subj:"Φυσική",color:"#7c3aed",level:"LYK_C",teacher:"t2",room:"Αίθουσα 2",slots:[[2,"18:00","20:00"],[5,"18:00","20:00"]],att:92},
+  {id:"c4",name:"Χημεία Β' Λυκείου",subj:"Χημεία",color:"#059669",level:"LYK_B",teacher:"t2",room:"Εργαστήριο",slots:[[3,"16:00","17:30"]],att:84},
+  {id:"c5",name:"Αρχαία Ελληνικά Γ' Λυκείου",subj:"Αρχαία",color:"#b45309",level:"LYK_C",teacher:"t3",room:"Αίθουσα 3",slots:[[1,"19:15","21:00"],[3,"19:15","21:00"]],att:89},
+  {id:"c6",name:"Έκθεση Γ' Γυμνασίου",subj:"Έκθεση",color:"#0891b2",level:"GYM_C",teacher:"t4",room:"Αίθουσα 3",slots:[[2,"15:00","16:30"]],att:80},
+  {id:"c7",name:"Αγγλικά B2",subj:"Αγγλικά",color:"#dc2626",level:"GYM_C",teacher:"t5",room:"Αίθουσα 4",slots:[[1,"15:30","17:00"],[3,"15:30","17:00"]],att:91},
+  {id:"c8",name:"Γαλλικά DELF B1",subj:"Γαλλικά",color:"#4f46e5",level:"LYK_A",teacher:"t5",room:"Αίθουσα 4",slots:[[4,"15:30","17:00"]],att:88},
+];
+const M=["Νίκος","Γιάννης","Κώστας","Αλέξανδρος","Παναγιώτης","Βασίλης","Στέφανος","Θοδωρής","Άγγελος","Μιχάλης","Χρήστος","Λευτέρης","Σπύρος","Ηλίας","Φίλιππος"];
+const F=["Σοφία","Αθηνά","Δέσποινα","Ιωάννα","Χριστίνα","Αναστασία","Ευαγγελία","Ζωή","Μυρτώ","Δανάη","Φωτεινή","Κωνσταντίνα","Ραφαέλα","Ειρήνη","Βασιλική"];
+const FAM=[["Γεωργίου","Γεωργίου"],["Ιωάννου","Ιωάννου"],["Δημητρίου","Δημητρίου"],["Μαυρίδης","Μαυρίδου"],["Οικονόμου","Οικονόμου"],["Καραγιάννης","Καραγιάννη"],["Πετρόπουλος","Πετροπούλου"],["Σταματόπουλος","Σταματοπούλου"],["Χατζηδάκης","Χατζηδάκη"],["Λαμπράκης","Λαμπράκη"]];
+const LV=["LYK_C","LYK_C","LYK_B","LYK_B","LYK_A","GYM_C"];
+const STUDENTS=[];
+for(let i=0;i<30;i++){
+  const f=i%2===1, fam=FAM[i%10];
+  const first=f?F[Math.floor(i/2)]:M[Math.floor(i/2)], last=f?fam[1]:fam[0], level=LV[i%6];
+  const classes=CLASSES.filter(c=>c.level===level||(level==="LYK_A"&&c.level==="LYK_B")).filter(c=>!["Αγγλικά","Γαλλικά"].includes(c.subj)).slice(0,3).map(c=>c.id);
+  classes.push(rnd()<.6?"c7":"c8");
+  const avg=+(13+rnd()*6.5).toFixed(1);
+  STUDENTS.push({id:"s"+i,first,last,code:"AK-"+(2501+i),level,classes,avg,att:Math.round(84+rnd()*16),status:i===17?"archived":"active",family:i%10});
+}
+// Student 0 = Νίκος Γεωργίου — the demo student
+const ME_STUDENT=STUDENTS[0]; ME_STUDENT.classes=["c1","c3","c5","c8"];
+const GRADE_HISTORY={ // μηνιαίος μέσος όρος (0–20)
+  "Μαθηματικά":[15.5,16,16.8,17.2,17.9],"Φυσική":[14,14.6,15.1,15.8,16.4],"Αρχαία":[16.2,16,16.9,17.1,17.6],"Γαλλικά":[17,17.4,17.8,18.1,18.5]
+};
+const MONTHS=["Σεπ","Οκτ α'","Οκτ β'","Νοε α'","Νοε β'"];
+const EXAMS=[
+  {title:"Διαγώνισμα Ολοκληρωμάτων",cls:"c1",date:"Πέμ 26 Νοε, 17:00",max:20},
+  {title:"Ταλαντώσεις — Κεφ. 1",cls:"c3",date:"Τρι 1 Δεκ, 18:00",max:20},
+  {title:"Αδίδακτο κείμενο",cls:"c5",date:"Δευ 7 Δεκ, 19:15",max:20},
+];
+const RESULTS=[
+  {title:"Παράγωγοι — Κανόνες",cls:"c1",date:"12 Νοε",score:18.5,fb:"Εξαιρετική μεθοδολογία. Πρόσεξε τα πρόσημα στο Θέμα Γ."},
+  {title:"Κρούσεις",cls:"c3",date:"10 Νοε",score:16,fb:"Καλή δουλειά. Χρειάζεται περισσότερη εξάσκηση στα διαγράμματα."},
+  {title:"Θουκυδίδης — Ενότητα 3",cls:"c5",date:"5 Νοε",score:17.5,fb:"Πολύ καλή μετάφραση, προσοχή στη συντακτική ανάλυση."},
+  {title:"Compréhension écrite",cls:"c8",date:"3 Νοε",score:18.7,fb:"Très bien! Συνέχισε έτσι."},
+  {title:"Όρια & Συνέχεια",cls:"c1",date:"22 Οκτ",score:17,fb:"Σταθερή πρόοδος."},
+];
+const HOMEWORK=[
+  {title:"Ασκήσεις σελ. 142 (1–12)",cls:"c1",due:"Αύριο, 23:59",status:"IN_PROGRESS"},
+  {title:"Εργαστηριακή αναφορά: Εκκρεμές",cls:"c3",due:"Πέμ 26 Νοε",status:"NOT_STARTED"},
+  {title:"Μετάφραση ενότητας 4",cls:"c5",due:"Παρ 27 Νοε",status:"SUBMITTED"},
+  {title:"Rédaction: Mes vacances",cls:"c8",due:"20 Νοε",status:"REVIEWED",grade:"18/20"},
+];
+const MATERIALS=[
+  {title:"Θεωρία — Ολοκληρώματα.pdf",cls:"c1",size:"2,4 MB",date:"Σήμερα",type:"PDF"},
+  {title:"Τυπολόγιο Φυσικής Γ' Λυκείου.pdf",cls:"c3",size:"860 KB",date:"Χθες",type:"PDF"},
+  {title:"Θουκυδίδης — Σημειώσεις.docx",cls:"c5",size:"340 KB",date:"20 Νοε",type:"DOCX"},
+  {title:"Grammaire: Subjonctif.pptx",cls:"c8",size:"5,1 MB",date:"18 Νοε",type:"PPTX"},
+];
+const ANNOUNCEMENTS=[
+  {title:"Αλλαγή ωραρίου Παρασκευής",body:"Το μάθημα Φυσικής Γ' Λυκείου μεταφέρεται στις 18:30 αυτή την Παρασκευή.",who:"Γραμματεία",when:"Πριν από 2 ώρες",tag:"Πρόγραμμα"},
+  {title:"Διαγωνίσματα προσομοίωσης Δεκεμβρίου",body:"Οι προσομοιώσεις Πανελληνίων θα πραγματοποιηθούν 14–19 Δεκεμβρίου.",who:"Α. Ραφαηλίδου",when:"Χθες",tag:"Διαγωνίσματα"},
+  {title:"Αργία 8ης Δεκεμβρίου",body:"Το φροντιστήριο θα παραμείνει κλειστό την Τρίτη 8 Δεκεμβρίου.",who:"Γραμματεία",when:"20 Νοε",tag:"Αργία"},
+];
+const ACTIVITY=[
+  {type:"ΜΑΘΗΤΗΣ",t:"accent",name:"Σοφία Γεωργίου",action:"Ενημέρωση προφίλ",by:"Α. Ραφαηλίδου",time:"10:45"},
+  {type:"ΒΑΘΜΟΙ",t:"violet",name:"Παράγωγοι — Γ' Λυκείου",action:"Δημοσίευση βαθμολογιών",by:"Γ. Παπαδόπουλος",time:"10:12"},
+  {type:"ΥΛΙΚΟ",t:"success",name:"Θεωρία — Ολοκληρώματα.pdf",action:"Ανέβηκε αρχείο",by:"Γ. Παπαδόπουλος",time:"09:58"},
+  {type:"ΤΜΗΜΑ",t:"warning",name:"Χημεία Β' Λυκείου",action:"Αλλαγή αίθουσας",by:"Α. Ραφαηλίδου",time:"09:30"},
+  {type:"ΜΑΘΗΤΗΣ",t:"accent",name:"Άγγελος Γεωργίου",action:"Εγγραφή σε τμήμα",by:"Α. Ραφαηλίδου",time:"Χθες"},
+  {type:"ΠΑΡΟΥΣΙΕΣ",t:"danger",name:"Αγγλικά B2",action:"Καταχώριση παρουσιών",by:"Κ. Βασιλείου",time:"Χθες"},
+];
+const NOTIFS=[
+  {t:"Νέος βαθμός: Παράγωγοι — 18,5/20",w:"Πριν από 1 ώρα",i:"chart"},
+  {t:"Νέο υλικό: Θεωρία — Ολοκληρώματα.pdf",w:"Σήμερα",i:"folder"},
+  {t:"Προγραμματίστηκε διαγώνισμα: Ταλαντώσεις",w:"Χθες",i:"exam"},
+];
+const CENTERS=[
+  {name:"Φροντιστήριο Ακαδημία",slug:"akadimia",city:"Αθήνα",status:"ACTIVE",a:1,t:5,s:30,p:10},
+  {name:"Φροντιστήριο Πρόοδος",slug:"proodos",city:"Θεσσαλονίκη",status:"ACTIVE",a:1,t:3,s:22,p:14},
+  {name:"Κέντρο Ξένων Γλωσσών Λόγος",slug:"logos",city:"Πάτρα",status:"INACTIVE",a:1,t:2,s:0,p:0},
+];
+const clsById=id=>CLASSES.find(c=>c.id===id);
+const tName=id=>TEACHERS.find(t=>t.id===id)?.name||"—";
+const fmt=n=>String(n).replace(".",",");
+const initials=n=>n.split(" ").map(x=>x[0]).join("").slice(0,2);
+
+/* ═════════ Roles ═════════ */
+const ROLES={
+  admin:{label:"Διαχειριστής",name:"Αναστασία Ραφαηλίδου",email:"admin@akadimia.example",greet:"Αναστασία",icon:"building",
+    nav:[["Κύριο μενού",[["dashboard","Πίνακας Ελέγχου","dashboard"]]],["Διαχείριση",[["students","Μαθητές","cap"],["teachers","Καθηγητές","users"],["classes","Τμήματα","school"]]],
+         ["Εκπαίδευση",[["materials","Εκπαιδευτικό Υλικό","folder"],["exams","Διαγωνίσματα","exam"],["attendance","Παρουσίες","check"],["announcements","Ανακοινώσεις","mega"]]],["Λογαριασμός",[["profile","Το Προφίλ μου","profile"]]]]},
+  teacher:{label:"Καθηγητής",name:"Γιώργος Παπαδόπουλος",email:"teacher@akadimia.example",greet:"Γιώργο",icon:"user",
+    nav:[["Κύριο μενού",[["dashboard","Αρχική","dashboard"],["classes","Τα Τμήματά μου","school"]]],["Εκπαίδευση",[["attendance","Παρουσίες","check"],["exams","Διαγωνίσματα","exam"],["materials","Εκπαιδευτικό Υλικό","folder"],["announcements","Ανακοινώσεις","mega"]]],["Λογαριασμός",[["profile","Το Προφίλ μου","profile"]]]]},
+  student:{label:"Μαθητής · Γ' Λυκείου",name:"Νίκος Γεωργίου",email:"student@akadimia.example",greet:"Νίκο",icon:"cap",
+    nav:[["Κύριο μενού",[["dashboard","Αρχική","dashboard"],["classes","Τα Μαθήματά μου","school"],["materials","Εκπαιδευτικό Υλικό","folder"],["homework","Εργασίες","clipboard",2],["exams","Διαγωνίσματα","exam"],["grades","Βαθμολογίες","chart"],["attendance","Παρουσίες","check"],["announcements","Ανακοινώσεις","mega"]]],["Λογαριασμός",[["profile","Το Προφίλ μου","profile"]]]]},
+  parent:{label:"Γονέας",name:"Αντώνης Γεωργίου",email:"parent@akadimia.example",greet:"Αντώνη",icon:"users",
+    nav:[["Κύριο μενού",[["dashboard","Αρχική","dashboard"],["grades","Βαθμολογίες","chart"],["attendance","Παρουσίες","check"],["exams","Διαγωνίσματα","exam"],["announcements","Ανακοινώσεις","mega"]]],["Λογαριασμός",[["profile","Το Προφίλ μου","profile"]]]]},
+  super:{label:"Διαχειριστής Πλατφόρμας",name:"Πλατφόρμα Διαχειριστής",email:"superadmin@educore.example",greet:"",icon:"shield",
+    nav:[["Πλατφόρμα",[["dashboard","Φροντιστήρια","building"]]],["Λογαριασμός",[["profile","Το Προφίλ μου","profile"]]]]},
+};
+let state={role:null,page:"dashboard",child:0,attClass:"c2",att:{},search:"",level:""};
+
+/* ═════════ Shell ═════════ */
+const $=s=>document.querySelector(s);
+document.getElementById("demoBtns").innerHTML=[["admin"],["teacher"],["student"],["parent"],["super"]].map(([k])=>`<button data-role="${k}">${ic(ROLES[k].icon,16)}${ROLES[k].label.split(" ·")[0]}</button>`).join("");
+document.getElementById("demoBtns").onclick=e=>{const b=e.target.closest("[data-role]");if(b)enter(b.dataset.role)};
+$("#loginForm").onsubmit=e=>{e.preventDefault();const em=$("#em").value.toLowerCase();const k=Object.keys(ROLES).find(r=>ROLES[r].email===em);enter(k||"admin")};
+
+function enter(role){state.role=role;state.page="dashboard";$("#login").classList.add("hidden");$("#app").classList.remove("hidden");renderShell();render();window.scrollTo(0,0)}
+function logout(){$("#app").classList.add("hidden");$("#login").classList.remove("hidden");closeMenus()}
+
+function renderShell(){
+  const R=ROLES[state.role];
+  $("#centerName").textContent=state.role==="super"?"Διαχείριση πλατφόρμας":"Φροντιστήριο Ακαδημία";
+  $("#uAv").textContent=initials(R.name);$("#uName").textContent=R.name;$("#uRole").textContent=R.label;
+  $("#nav").innerHTML=R.nav.map(([sec,items])=>`<div class="nav-sec">${sec}</div>`+items.map(([k,l,i,c])=>`<button class="nav-item ${state.page===k?"active":""}" data-page="${k}">${ic(i)}<span>${l}</span>${c?`<span class="count">${c}</span>`:""}</button>`).join("")).join("");
+  $("#userMenu").innerHTML=`<div class="lbl" style="color:var(--fg)">${R.name}<div class="muted" style="font-weight:450">${R.email}</div></div><hr>
+    <div class="lbl">Εναλλαγή ρόλου (demo)</div>${Object.keys(ROLES).map(k=>`<button data-switch="${k}" class="${k===state.role?"on":""}">${ic(ROLES[k].icon,16)}${ROLES[k].label.split(" ·")[0]}</button>`).join("")}
+    <hr><button data-act="logout" style="color:var(--danger)">${ic("logout",16)}Αποσύνδεση</button>`;
+  $("#bellMenu").innerHTML=`<div class="lbl">Ειδοποιήσεις</div>`+NOTIFS.map(n=>`<button>${ic(n.i,16)}<div><div style="font-weight:550">${n.t}</div><div class="muted small">${n.w}</div></div></button>`).join("");
+  $("#themeBtn").innerHTML=ic(document.documentElement.classList.contains("dark")?"sun":"moon");
+  $("#burger").innerHTML=ic("menu",20);
+}
+document.addEventListener("click",e=>{
+  const p=e.target.closest("[data-page]"); if(p){state.page=p.dataset.page;renderShell();render();closeDrawer();window.scrollTo(0,0);return}
+  const s=e.target.closest("[data-switch]"); if(s){closeMenus();enter(s.dataset.switch);return}
+  if(e.target.closest('[data-act="logout"]'))return logout();
+  if(e.target.closest("#userBtn")){$("#bellMenu").classList.add("hidden");$("#userMenu").classList.toggle("hidden");return}
+  if(e.target.closest("#bellBtn")){$("#userMenu").classList.add("hidden");$("#bellMenu").classList.toggle("hidden");return}
+  if(!e.target.closest(".menu"))closeMenus();
+});
+const closeMenus=()=>{$("#userMenu").classList.add("hidden");$("#bellMenu").classList.add("hidden")};
+$("#themeBtn").onclick=()=>{document.documentElement.classList.toggle("dark");renderShell()};
+$("#burger").onclick=()=>{$("#sidebar").classList.add("open");$("#scrim").classList.add("open")};
+$("#scrim").onclick=()=>closeDrawer();
+const closeDrawer=()=>{$("#sidebar").classList.remove("open");$("#scrim").classList.remove("open")};
+$("#globalSearch").oninput=e=>{if(["admin","teacher"].includes(state.role)){state.search=e.target.value;state.page="students";if(state.role==="teacher")state.page="classes";renderShell();render()}};
+function toast(msg){const t=document.createElement("div");t.className="toast";t.innerHTML=ic("ok",16)+msg;document.body.appendChild(t);setTimeout(()=>t.remove(),2200)}
+
+/* ═════════ Widgets ═════════ */
+const stat=(label,v,icon,tone,hint)=>`<div class="card stat fade"><div class="top"><div><div class="muted fw" style="font-weight:520">${label}</div><div class="v tab">${v}</div></div><div class="ic t-${tone}">${ic(icon,20)}</div></div>${hint?`<div class="h">${hint}</div>`:""}</div>`;
+const card=(title,body,extra="",cls="")=>`<div class="card ${cls}"><div class="card-h"><h3>${title}</h3>${extra}</div><div class="card-b">${body}</div></div>`;
+const head=(t,d,actions="")=>`<div class="page-h"><div><h1>${t}</h1>${d?`<p>${d}</p>`:""}</div><div style="display:flex;gap:8px;flex-wrap:wrap">${actions}</div></div>`;
+function week(classIds){
+  const cls=classIds.map(clsById);
+  return `<div class="week">${[1,2,3,4,5].map(d=>{
+    const ls=cls.flatMap(c=>c.slots.filter(s=>s[0]===d).map(s=>({c,s}))).sort((a,b)=>a.s[1].localeCompare(b.s[1]));
+    return `<div class="day ${d===TODAY?"today":""}"><h4>${DAYS[d].slice(0,3)}${d===TODAY?" · Σήμερα":""}</h4>${ls.length?ls.map(({c,s})=>`<div class="lesson" style="border-left-color:${c.color}"><span class="tab">${s[1]}–${s[2]}</span><b>${c.subj}</b><span>${c.room}</span></div>`).join(""):`<div class="muted small" style="text-align:center;padding:14px 0">—</div>`}</div>`}).join("")}</div>`;
+}
+function today(classIds){
+  const ls=classIds.map(clsById).flatMap(c=>c.slots.filter(s=>s[0]===TODAY).map(s=>({c,s}))).sort((a,b)=>a.s[1].localeCompare(b.s[1]));
+  return ls.length?`<div class="list">${ls.map(({c,s})=>`<div class="row"><div class="bar" style="background:${c.color}"></div><div class="grow"><div class="fw trunc">${c.name}</div><div class="muted small" style="display:flex;gap:12px">${ic("clock",13)}<span class="tab">${s[1]}–${s[2]}</span>${ic("pin",13)}${c.room}</div></div></div>`).join("")}</div>`:`<div class="empty">Δεν υπάρχουν μαθήματα σήμερα.</div>`;
+}
+function classCards(ids,showCount=true){
+  return `<div class="grid g3">${ids.map(clsById).map(c=>{const n=STUDENTS.filter(s=>s.classes.includes(c.id)&&s.status==="active").length;return `<div class="card cc fade"><div class="top" style="background:${c.color}"></div><div style="padding:18px 20px">
+    <div style="display:flex;justify-content:space-between;gap:8px"><div class="grow"><div class="fw" style="font-size:15px">${c.name}</div><div class="muted trunc">${tName(c.teacher)}</div></div><span class="badge b-muted">${LEVELS[c.level]}</span></div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin:12px 0">${c.slots.map(s=>`<span class="badge" style="border:1px solid var(--border);color:var(--muted);font-weight:500">${DAYS[s[0]].slice(0,3)} ${s[1]}</span>`).join("")}</div>
+    ${showCount?`<div class="muted small">${n} μαθητές · ${c.room} · Παρουσίες ${c.att}%</div>`:`<div class="muted small">${c.room}</div>`}</div></div>`}).join("")}</div>`;
+}
+function lineChart(series){
+  const W=560,H=210,P=34,minV=12,maxV=20;const keys=Object.keys(series);const n=MONTHS.length;
+  const x=i=>P+i*(W-P-12)/(n-1), y=v=>H-24-(v-minV)/(maxV-minV)*(H-44);
+  const colors={"Μαθηματικά":"#2563eb","Φυσική":"#7c3aed","Αρχαία":"#b45309","Γαλλικά":"#4f46e5","Χημεία":"#059669","Αγγλικά":"#dc2626","Έκθεση":"#0891b2"};
+  let g="";for(let v=12;v<=20;v+=2)g+=`<line x1="${P}" x2="${W-8}" y1="${y(v)}" y2="${y(v)}" stroke="var(--border)"/><text x="${P-8}" y="${y(v)+4}" text-anchor="end" font-size="10" fill="var(--muted)">${v}</text>`;
+  MONTHS.forEach((m,i)=>g+=`<text x="${x(i)}" y="${H-6}" text-anchor="middle" font-size="10" fill="var(--muted)">${m}</text>`);
+  keys.forEach(k=>{const c=colors[k]||"#4f46e5";const pts=series[k].map((v,i)=>`${x(i)},${y(v)}`).join(" ");g+=`<polyline points="${pts}" fill="none" stroke="${c}" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>`+series[k].map((v,i)=>`<circle cx="${x(i)}" cy="${y(v)}" r="3.5" fill="var(--card)" stroke="${c}" stroke-width="2"/>`).join("")});
+  return `<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto;display:block">${g}</svg><div style="display:flex;gap:14px;flex-wrap:wrap;margin-top:8px">${keys.map(k=>`<span class="small" style="display:flex;align-items:center;gap:6px"><i style="width:10px;height:10px;border-radius:3px;background:${colors[k]||"#4f46e5"}"></i>${k}</span>`).join("")}</div>`;
+}
+const donut=(p,color="var(--success)")=>`<div class="donut" style="background:conic-gradient(${color} ${p*3.6}deg,var(--surface) 0)"><div><b class="tab">${p}%</b><span class="muted small">παρουσία</span></div></div>`;
+const hwStatus={NOT_STARTED:["Δεν ξεκίνησε","b-muted"],IN_PROGRESS:["Σε εξέλιξη","t-warning"],SUBMITTED:["Υποβλήθηκε","t-accent"],LATE:["Εκπρόθεσμη","t-danger"],REVIEWED:["Βαθμολογήθηκε","t-success"]};
+const gradeColor=g=>g>=18?"var(--success)":g>=15?"var(--accent)":g>=12?"var(--warning)":"var(--danger)";
+
+/* ═════════ Pages ═════════ */
+const PAGES={
+admin:{
+  dashboard(){
+    const active=STUDENTS.filter(s=>s.status==="active").length;
+    return head("Καλημέρα, Αναστασία!","Ακολουθεί η εικόνα του φροντιστηρίου σήμερα.",`<button class="btn btn-outline">${ic("download",16)}Εξαγωγή</button><button class="btn btn-primary" onclick="toast('Φόρμα νέου μαθητή (demo)')">${ic("plus",16)}Νέος μαθητής</button>`)+
+    `<div class="grid g4">${stat("Ενεργοί μαθητές",active,"cap","accent",'<span class="up">↑ 4</span> νέοι αυτόν τον μήνα')+stat("Καθηγητές",5,"users","violet","5 ενεργοί σήμερα")+stat("Ενεργά τμήματα",8,"school","success","Σχολικό έτος 2025-2026")+stat("Επερχόμενα διαγωνίσματα",6,"exam","warning","Τις επόμενες 14 ημέρες")}</div>
+    <div class="grid g3" style="margin-top:18px">
+      ${card("Παρουσίες ανά τμήμα (σήμερα)",`<div class="bars">${CLASSES.map(c=>`<div class="col"><div class="b ${c.att<86?"low":""}" style="height:${(c.att-55)*2.2}%"><em>${c.att}%</em></div><div class="lb">${c.subj}</div></div>`).join("")}</div>`,'<a class="link" href="#" onclick="return false">Λεπτομέρειες</a>',"span2")}
+      ${card("Ειδοποιήσεις συστήματος",`<div class="list">
+        <div class="alert" style="background:var(--danger-soft);border-color:transparent"><div class="ic" style="background:var(--card);color:var(--danger)">${ic("alert")}</div><div class="grow"><div class="fw">12 εκκρεμείς εργασίες</div><div class="muted small">Προθεσμία που έληξε σε 3 τμήματα</div></div></div>
+        <div class="alert" style="background:var(--warning-soft);border-color:transparent"><div class="ic" style="background:var(--card);color:var(--warning)">${ic("ban")}</div><div class="grow"><div class="fw">Μη καταχωρημένες παρουσίες</div><div class="muted small">2 μαθήματα χθες χωρίς παρουσιολόγιο</div></div></div>
+        <div class="alert"><div class="ic t-accent">${ic("cloud")}</div><div class="grow"><div class="fw">Αντίγραφο ασφαλείας</div><div class="muted small">Προγραμματισμένο απόψε στις 23:59</div></div></div></div>`)}
+    </div>
+    <div style="margin-top:18px">${card("Εβδομαδιαίο πρόγραμμα",week(CLASSES.map(c=>c.id)))}</div>
+    <div class="grid g3" style="margin-top:18px">
+      ${card("Πρόσφατη δραστηριότητα",`<div class="table-wrap"><table><thead><tr><th>Τύπος</th><th>Όνομα</th><th class="hide-sm">Ενέργεια</th><th class="hide-sm">Από</th><th>Ώρα</th></tr></thead><tbody>${ACTIVITY.map(a=>`<tr><td><span class="badge t-${a.t}">${a.type}</span></td><td class="fw">${a.name}</td><td class="muted hide-sm">${a.action}</td><td class="hide-sm"><div class="person"><div class="avatar">${initials(a.by.replace(".",""))}</div>${a.by}</div></td><td class="muted tab">${a.time}</td></tr>`).join("")}</tbody></table></div>`,'<a class="link" href="#" onclick="return false">Όλες</a>',"span2")}
+      ${card("Μέση επίδοση",`<div style="display:flex;align-items:center;gap:20px;flex-wrap:wrap">${donut(91)}<div class="legend"><span><i style="background:var(--success)"></i>Παρόντες 91%</span><span><i style="background:var(--warning)"></i>Καθυστέρηση 4%</span><span><i style="background:var(--surface)"></i>Απόντες 5%</span></div></div>
+      <div style="margin-top:18px" class="list">${["Μαθηματικά|16.8","Φυσική|15.9","Αρχαία|16.4","Αγγλικά|17.6"].map(x=>{const[n,v]=x.split("|");return `<div><div style="display:flex;justify-content:space-between" class="small"><span>${n}</span><b class="tab">${fmt(v)}/20</b></div><div class="progress" style="margin-top:5px"><i style="width:${v*5}%;background:${gradeColor(+v)}"></i></div></div>`}).join("")}</div>`)}
+    </div>`;
+  },
+  students(){
+    const q=state.search.toLowerCase();
+    const rows=STUDENTS.filter(s=>(!q||`${s.first} ${s.last} ${s.code}`.toLowerCase().includes(q))&&(!state.level||s.level===state.level));
+    return head("Μαθητές",`${STUDENTS.filter(s=>s.status==="active").length} ενεργοί μαθητές · σχολικό έτος 2025-2026`,`<button class="btn btn-primary" onclick="toast('Φόρμα νέου μαθητή (demo)')">${ic("plus",16)}Νέος μαθητής</button>`)+
+    `<div class="card" style="padding:16px"><div class="filters"><input class="input" placeholder="Αναζήτηση ονόματος ή κωδικού…" value="${state.search}" oninput="state.search=this.value;rerenderKeep(this)"><select class="input" onchange="state.level=this.value;render()"><option value="">Όλες οι τάξεις</option>${Object.entries(LEVELS).map(([k,v])=>`<option value="${k}" ${state.level===k?"selected":""}>${v}</option>`).join("")}</select></div>
+    <div class="table-wrap"><table><thead><tr><th>Μαθητής</th><th>Κωδικός</th><th class="hide-sm">Τάξη</th><th class="hide-sm">Τμήματα</th><th>Μ.Ο.</th><th class="hide-sm">Παρουσίες</th><th>Κατάσταση</th></tr></thead><tbody>
+    ${rows.map(s=>`<tr><td><div class="person"><div class="avatar">${s.first[0]}${s.last[0]}</div><div><div class="fw">${s.first} ${s.last}</div></div></div></td><td class="muted tab">${s.code}</td><td class="hide-sm">${LEVELS[s.level]}</td><td class="hide-sm"><div style="display:flex;gap:4px;flex-wrap:wrap">${s.classes.map(id=>`<span class="badge" style="background:color-mix(in srgb,${clsById(id).color} 12%,var(--card));color:${clsById(id).color}">${clsById(id).subj}</span>`).join("")}</div></td><td class="grade tab" style="color:${gradeColor(s.avg)}">${fmt(s.avg)}</td><td class="hide-sm tab">${s.att}%</td><td>${s.status==="active"?'<span class="badge t-success">Ενεργός</span>':'<span class="badge b-muted">Αρχειοθετημένος</span>'}</td></tr>`).join("")||`<tr><td colspan="7"><div class="empty">Δεν βρέθηκαν μαθητές.</div></td></tr>`}
+    </tbody></table></div><div class="muted small" style="margin-top:12px">Εμφάνιση ${rows.length} από ${STUDENTS.length}</div></div>`;
+  },
+  teachers(){
+    return head("Καθηγητές","5 καθηγητές · 8 ενεργά τμήματα")+`<div class="grid g3">${TEACHERS.map(t=>{const cl=CLASSES.filter(c=>c.teacher===t.id);return `<div class="card" style="padding:20px"><div class="person"><div class="avatar" style="width:44px;height:44px">${initials(t.name)}</div><div><div class="fw" style="font-size:15px">${t.name}</div><div class="muted">${t.title}</div></div></div><div class="list" style="margin-top:14px">${cl.map(c=>`<div class="small" style="display:flex;align-items:center;gap:8px"><i style="width:8px;height:8px;border-radius:50%;background:${c.color}"></i>${c.name}</div>`).join("")}</div></div>`}).join("")}</div>`;
+  },
+  classes(){return head("Τμήματα","Σχολικό έτος 2025-2026")+classCards(CLASSES.map(c=>c.id))},
+},
+teacher:{
+  dashboard(){
+    const mine=CLASSES.filter(c=>c.teacher==="t1").map(c=>c.id);
+    return head("Καλημέρα, Γιώργο!","Τα τμήματα και το πρόγραμμά σας.",`<button class="btn btn-outline" onclick="toast('Ανέβασμα υλικού (demo)')">${ic("download",16)}Ανέβασμα υλικού</button><button class="btn btn-primary" onclick="state.page='attendance';renderShell();render()">${ic("check",16)}Παρουσίες</button>`)+
+    `<div class="grid g4">${stat("Τα τμήματά μου",2,"school","accent")+stat("Μαθητές",25,"cap","violet")+stat("Προς διόρθωση",14,"clipboard","warning","3 εργασίες, 1 διαγώνισμα")+stat("Μ.Ο. τμημάτων",fmt(16.4),"chart","success",'<span class="up">↑ 0,6</span> από τον Οκτώβριο')}</div>
+    <div class="grid g3" style="margin-top:18px">${card("Εβδομαδιαίο πρόγραμμα",week(mine),"","span2")}${card("Σημερινά μαθήματα",today(mine),'<span class="muted small">Τρίτη</span>')}</div>
+    <div class="grid g2" style="margin-top:18px">
+      ${card("Πρόσφατες υποβολές",`<div class="list">${["Σοφία Γεωργίου|Ασκήσεις σελ. 142|πριν 20΄","Αλέξανδρος Μαυρίδης|Ασκήσεις σελ. 142|πριν 1 ώρα","Ιωάννα Ιωάννου|Συναρτήσεις — Φύλλο 3|Χθες","Βασίλης Καραγιάννης|Συναρτήσεις — Φύλλο 3|Χθες"].map(x=>{const[a,b,c]=x.split("|");return `<div class="row"><div class="avatar">${initials(a)}</div><div class="grow"><div class="fw trunc">${a}</div><div class="muted small trunc">${b}</div></div><span class="muted small">${c}</span><button class="btn btn-outline btn-sm" onclick="toast('Άνοιγμα υποβολής (demo)')">Διόρθωση</button></div>`}).join("")}</div>`)}
+      ${card("Επερχόμενα διαγωνίσματα",`<div class="list">${[["Διαγώνισμα Ολοκληρωμάτων","c1","Πέμ 26 Νοε"],["Πιθανότητες","c2","Παρ 4 Δεκ"]].map(([t,c,d])=>`<div class="row"><div class="bar" style="background:${clsById(c).color}"></div><div class="grow"><div class="fw">${t}</div><div class="muted small">${clsById(c).name}</div></div><span class="badge t-warning">${d}</span></div>`).join("")}</div>`)}
+    </div>`;
+  },
+  classes(){return head("Τα Τμήματά μου","2 τμήματα · 25 μαθητές")+classCards(["c1","c2"])},
+  attendance(){
+    const c=clsById(state.attClass);const studs=STUDENTS.filter(s=>s.classes.includes(c.id)&&s.status==="active");
+    studs.forEach(s=>{if(!state.att[s.id])state.att[s.id]="P"});
+    const cnt=k=>studs.filter(s=>state.att[s.id]===k).length;
+    return head("Παρουσίες",`Τρίτη 24 Νοεμβρίου · ${c.name}`,`<select class="input" style="height:40px;width:auto" onchange="state.attClass=this.value;render()">${["c1","c2"].map(id=>`<option value="${id}" ${id===state.attClass?"selected":""}>${clsById(id).name}</option>`).join("")}</select>`)+
+    `<div class="grid g4" style="margin-bottom:18px">${stat("Παρόντες",cnt("P"),"ok","success")+stat("Απόντες",cnt("A"),"ban","danger")+stat("Καθυστέρηση",cnt("L"),"clock","warning")+stat("Δικαιολογημένοι",cnt("E"),"shield","accent")}</div>
+    <div class="card" style="padding:8px 16px">${studs.map(s=>`<div style="display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--border);flex-wrap:wrap"><div class="person grow"><div class="avatar">${s.first[0]}${s.last[0]}</div><div><div class="fw">${s.first} ${s.last}</div><div class="muted small">${s.code}</div></div></div>
+    <div class="att-btns">${[["P","Παρών"],["A","Απών"],["L","Καθυστέρηση"],["E","Δικαιολογ."]].map(([k,l])=>`<button class="${state.att[s.id]===k?"sel-"+k:""}" onclick="state.att['${s.id}']='${k}';render()">${l}</button>`).join("")}</div></div>`).join("")}
+    <div style="display:flex;justify-content:flex-end;padding:14px 0"><button class="btn btn-primary" onclick="toast('Οι παρουσίες αποθηκεύτηκαν')">Αποθήκευση παρουσιών</button></div></div>`;
+  },
+},
+student:{
+  dashboard(){
+    const pend=HOMEWORK.filter(h=>["NOT_STARTED","IN_PROGRESS"].includes(h.status)).length;
+    return `<div class="student-hero fade"><div class="blob" style="width:300px;height:300px;right:-80px;top:-100px;background:rgba(99,102,241,.35)"></div><div class="blob" style="width:180px;height:180px;right:160px;bottom:-80px;background:rgba(139,92,246,.25)"></div>
+      <span class="pill">Φροντιστήριο Ακαδημία · Γ' Λυκείου</span><h1>Καλημέρα, Νίκο!</h1><p>Έχεις 2 μαθήματα σήμερα και διαγώνισμα στα Μαθηματικά την Πέμπτη. Συνέχισε έτσι — ο μέσος όρος σου ανέβηκε κατά 0,7 μονάδες!</p>
+      <div style="display:flex;gap:10px;margin-top:20px;position:relative;flex-wrap:wrap"><button class="btn" style="background:#fff;color:#0b1430" onclick="state.page='homework';renderShell();render()">Οι εργασίες μου</button><button class="btn" style="border:1px solid rgba(255,255,255,.25)" onclick="state.page='grades';renderShell();render()">Βαθμολογίες</button></div></div>
+    <div class="grid g4" style="margin-top:18px">${stat("Μέσος όρος",fmt(17.6),"chart","success",'<span class="up">↑ 0,7</span> από τον Οκτώβριο')+stat("Εκκρεμείς εργασίες",pend,"clipboard","warning","Η επόμενη λήγει αύριο")+stat("Διαγωνίσματα",3,"exam","accent","Το επόμενο σε 2 ημέρες")+stat("Παρουσίες",97+"%","check","violet","1 απουσία αυτό το τρίμηνο")}</div>
+    <div class="grid g3" style="margin-top:18px">${card("Εβδομαδιαίο πρόγραμμα",week(ME_STUDENT.classes),"","span2")}${card("Σημερινά μαθήματα",today(ME_STUDENT.classes),'<span class="muted small">Τρίτη</span>')}</div>
+    <div class="grid g3" style="margin-top:18px">${card("Πρόοδος βαθμολογίας",lineChart(GRADE_HISTORY),'<span class="badge b-muted">κλίμακα 0–20</span>',"span2")}
+      ${card("Επερχόμενα διαγωνίσματα",`<div class="list">${EXAMS.map(e=>`<div class="row"><div class="bar" style="background:${clsById(e.cls).color}"></div><div class="grow"><div class="fw trunc">${e.title}</div><div class="muted small">${clsById(e.cls).subj} · ${e.date}</div></div></div>`).join("")}</div>`)}</div>
+    <div class="grid g3" style="margin-top:18px">
+      ${card("Τελευταίοι βαθμοί",`<div class="list">${RESULTS.slice(0,4).map(r=>`<div class="row"><div class="grow"><div class="fw trunc">${r.title}</div><div class="muted small">${clsById(r.cls).subj} · ${r.date}</div></div><div class="grade tab" style="color:${gradeColor(r.score)}">${fmt(r.score)}<span class="muted small">/20</span></div></div>`).join("")}</div>`,'<a class="link" href="#" onclick="state.page=\'grades\';renderShell();render();return false">Όλοι</a>')}
+      ${card("Εργασίες",`<div class="list">${HOMEWORK.map(h=>`<div class="row"><div class="grow"><div class="fw trunc">${h.title}</div><div class="muted small">${clsById(h.cls).subj} · ${h.due}</div></div><span class="badge ${hwStatus[h.status][1]}">${hwStatus[h.status][0]}</span></div>`).join("")}</div>`)}
+      ${card("Νέο υλικό",`<div class="list">${MATERIALS.slice(0,3).map(m=>`<div class="row"><div class="ic t-accent" style="width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center">${ic("file",17)}</div><div class="grow"><div class="fw trunc">${m.title}</div><div class="muted small">${m.size} · ${m.date}</div></div></div>`).join("")}</div>`)}
+    </div>
+    <div style="margin-top:18px">${card("Ανακοινώσεις",announcementsList())}</div>`;
+  },
+  classes(){return head("Τα Μαθήματά μου","4 τμήματα · σχολικό έτος 2025-2026")+classCards(ME_STUDENT.classes,false)},
+  homework(){return head("Εργασίες","2 εκκρεμείς · 1 σε αναμονή διόρθωσης")+`<div class="list">${HOMEWORK.map(h=>`<div class="card" style="padding:18px 20px;display:flex;align-items:center;gap:14px;flex-wrap:wrap"><div class="bar" style="background:${clsById(h.cls).color};height:44px"></div><div class="grow"><div class="fw" style="font-size:15px">${h.title}</div><div class="muted small">${clsById(h.cls).name} · Προθεσμία: ${h.due}</div></div>${h.grade?`<span class="grade" style="color:var(--success)">${h.grade}</span>`:""}<span class="badge ${hwStatus[h.status][1]}">${hwStatus[h.status][0]}</span>${["NOT_STARTED","IN_PROGRESS"].includes(h.status)?`<button class="btn btn-primary btn-sm" onclick="toast('Η εργασία υποβλήθηκε')">Υποβολή</button>`:""}</div>`).join("")}</div>`},
+  exams(){return head("Διαγωνίσματα","Προγραμματισμένα και αποτελέσματα")+card("Επερχόμενα",`<div class="list">${EXAMS.map(e=>`<div class="row"><div class="bar" style="background:${clsById(e.cls).color}"></div><div class="grow"><div class="fw">${e.title}</div><div class="muted small">${clsById(e.cls).name}</div></div><span class="badge t-warning">${e.date}</span></div>`).join("")}</div>`)+`<div style="margin-top:18px">`+PAGES.student.grades(true)+`</div>`},
+  grades(embedded){
+    const body=`<div class="table-wrap"><table><thead><tr><th>Διαγώνισμα</th><th class="hide-sm">Μάθημα</th><th>Ημ/νία</th><th>Βαθμός</th><th class="hide-sm">Σχόλιο καθηγητή</th></tr></thead><tbody>${RESULTS.map(r=>`<tr><td class="fw">${r.title}</td><td class="hide-sm">${clsById(r.cls).subj}</td><td class="muted">${r.date}</td><td class="grade tab" style="color:${gradeColor(r.score)}">${fmt(r.score)}/20</td><td class="muted hide-sm" style="max-width:340px">${r.fb}</td></tr>`).join("")}</tbody></table></div>`;
+    if(embedded===true)return card("Αποτελέσματα",body);
+    return head("Βαθμολογίες","Δημοσιευμένοι βαθμοί · κλίμακα 0–20")+`<div class="grid g4">${Object.entries(GRADE_HISTORY).map(([k,v])=>stat(k,fmt(v[v.length-1]),"chart",v[v.length-1]>=17.5?"success":"accent",`<span class="up">↑ ${fmt((v[v.length-1]-v[0]).toFixed(1))}</span> από τον Σεπτέμβριο`)).join("")}</div>
+    <div class="grid g3" style="margin-top:18px">${card("Πρόοδος",lineChart(GRADE_HISTORY),"","span2")}${card("Σχόλια καθηγητών",`<div class="list">${RESULTS.slice(0,3).map(r=>`<div><div class="fw small">${clsById(r.cls).subj}</div><div class="muted small" style="margin-top:2px">“${r.fb}”</div></div>`).join("")}</div>`)}</div><div style="margin-top:18px">${card("Όλα τα αποτελέσματα",body)}</div>`;
+  },
+  attendance(){return head("Παρουσίες","Τρέχον τρίμηνο")+`<div class="grid g3">${card("Σύνολο",`<div style="display:flex;gap:20px;align-items:center;flex-wrap:wrap">${donut(97)}<div class="legend"><span><i style="background:var(--success)"></i>Παρών: 34</span><span><i style="background:var(--warning)"></i>Καθυστέρηση: 1</span><span><i style="background:var(--danger)"></i>Απών: 1</span></div></div>`)}${card("Ανά μάθημα",`<div class="list">${ME_STUDENT.classes.map(id=>{const c=clsById(id);const p=[100,96,94,100][ME_STUDENT.classes.indexOf(id)];return `<div><div style="display:flex;justify-content:space-between" class="small"><span>${c.name}</span><b>${p}%</b></div><div class="progress" style="margin-top:5px"><i style="width:${p}%;background:${c.color}"></i></div></div>`}).join("")}</div>`,"","span2")}</div>`},
+},
+parent:{
+  dashboard(){
+    const kids=STUDENTS.filter(s=>s.family===0);const k=kids[state.child]||kids[0];
+    const hist=state.child===0?GRADE_HISTORY:{"Μαθηματικά":[14,14.5,15,15.6,16.1],"Χημεία":[13.5,14.2,14.8,15,15.7],"Αγγλικά":[16,16.4,16.9,17.3,17.5]};
+    return head("Καλημέρα, Αντώνη!","Η πρόοδος των παιδιών σας με μια ματιά.")+
+    `<div class="chips" style="margin-bottom:18px">${kids.map((s,i)=>`<button class="chip ${i===state.child?"on":""}" onclick="state.child=${i};render()">${s.first}</button>`).join("")}</div>
+    <div class="card" style="padding:18px 20px;display:flex;align-items:center;gap:16px;flex-wrap:wrap"><div class="avatar" style="width:52px;height:52px;font-size:16px">${k.first[0]}${k.last[0]}</div><div class="grow"><div class="fw" style="font-size:17px">${k.first} ${k.last}</div><div class="muted">${LEVELS[k.level]} · ${k.code}</div></div><span class="badge t-success">Ενεργός</span></div>
+    <div class="grid g4" style="margin-top:18px">${stat("Μέσος όρος",fmt(k.avg),"chart","success",'<span class="up">↑ 0,5</span> αυτόν τον μήνα')+stat("Παρουσίες",k.att+"%","check","accent")+stat("Επόμενο διαγώνισμα","Πέμ","exam","warning","Μαθηματικά · 17:00")+stat("Τμήματα",k.classes.length,"school","violet")}</div>
+    <div class="grid g3" style="margin-top:18px">${card("Πρόοδος βαθμολογίας",lineChart(hist),"","span2")}${card("Σχόλια καθηγητών",`<div class="list">${RESULTS.slice(0,3).map(r=>`<div class="row" style="align-items:flex-start"><div class="avatar">${initials(tName(clsById(r.cls).teacher))}</div><div class="grow"><div class="fw small">${tName(clsById(r.cls).teacher)}</div><div class="muted small">“${r.fb}”</div></div></div>`).join("")}</div>`)}</div>
+    <div class="grid g3" style="margin-top:18px">${card("Εβδομαδιαίο πρόγραμμα",week(k.classes),"","span2")}${card("Ανακοινώσεις",announcementsList(2))}</div>`;
+  },
+  grades(){return PAGES.student.grades()},
+  attendance(){return PAGES.student.attendance()},
+  exams(){return PAGES.student.exams()},
+},
+super:{
+  dashboard(){
+    return head("Διαχείριση Πλατφόρμας","Φροντιστήρια, διαχειριστές και δραστηριότητα της πλατφόρμας.",`<button class="btn btn-primary" onclick="toast('Φόρμα νέου φροντιστηρίου (demo)')">${ic("plus",16)}Νέο φροντιστήριο</button>`)+
+    `<div class="grid g4">${stat("Ενεργά φροντιστήρια","2/3","building","accent")+stat("Ενεργοί χρήστες",112,"users","violet")+stat("Μαθητές",52,"cap","success")+stat("Συνδέσεις (7 ημ.)",318,"chart","warning")}</div>
+    <div class="grid g3" style="margin-top:18px"><div class="span2 list">${CENTERS.map(c=>`<div class="card" style="padding:18px 20px;display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap"><div class="ic t-accent" style="width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center">${ic("building",20)}</div><div class="grow"><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><span class="fw" style="font-size:15px">${c.name}</span><span class="badge ${c.status==="ACTIVE"?"t-success":"b-muted"}">${c.status==="ACTIVE"?"Ενεργό":"Ανενεργό"}</span></div><div class="muted small" style="margin-top:2px"><code>${c.slug}</code> · ${c.city}</div><div class="small muted" style="margin-top:10px;display:flex;gap:14px;flex-wrap:wrap">Διαχειριστές: <b style="color:var(--fg)">${c.a}</b> Καθηγητές: <b style="color:var(--fg)">${c.t}</b> Μαθητές: <b style="color:var(--fg)">${c.s}</b> Γονείς: <b style="color:var(--fg)">${c.p}</b></div></div><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn btn-accent btn-sm" ${c.status!=="ACTIVE"?"disabled style='opacity:.5'":""} onclick="enter('admin')">Είσοδος</button><button class="btn btn-outline btn-sm" onclick="toast('Επεξεργασία (demo)')">Επεξεργασία</button></div></div>`).join("")}</div>
+    ${card("Πρόσφατη δραστηριότητα",`<div class="list">${[["Αναστασία Ραφαηλίδου","auth.login","Ακαδημία","πριν 5΄"],["Γιώργος Παπαδόπουλος","grades.publish","Ακαδημία","πριν 40΄"],["Λάμπρος Τσακίρης","auth.login","Πρόοδος","πριν 1 ώρα"],["Πλατφόρμα Διαχειριστής","center.deactivate","Λόγος","Χθες"],["Νίκος Γεωργίου","auth.login","Ακαδημία","Χθες"]].map(([a,b,c,d])=>`<div style="display:flex;gap:10px"><i style="width:8px;height:8px;border-radius:50%;background:var(--accent);margin-top:6px;flex-shrink:0"></i><div><div class="small"><b>${a}</b> <code class="badge b-muted">${b}</code></div><div class="muted small">${c} · ${d}</div></div></div>`).join("")}</div>`)}</div>`;
+  },
+},
+};
+const shared={
+  materials(){return head("Εκπαιδευτικό Υλικό","Αρχεία ανά μάθημα και τμήμα",["admin","teacher"].includes(state.role)?`<button class="btn btn-primary" onclick="toast('Ανέβασμα αρχείου (demo)')">${ic("plus",16)}Ανέβασμα</button>`:"")+`<div class="card" style="padding:8px 16px">${MATERIALS.map(m=>`<div style="display:flex;align-items:center;gap:12px;padding:14px 0;border-bottom:1px solid var(--border)"><div class="t-accent" style="width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0">${ic("file",18)}</div><div class="grow"><div class="fw trunc">${m.title}</div><div class="muted small">${clsById(m.cls).name} · ${m.size} · ${m.date}</div></div><span class="badge b-muted hide-sm">${m.type}</span><button class="btn btn-outline btn-sm" onclick="toast('Λήψη αρχείου (demo)')">${ic("download",14)}</button></div>`).join("")}</div>`},
+  announcements(){return head("Ανακοινώσεις","Νέα και ενημερώσεις του φροντιστηρίου",["admin","teacher"].includes(state.role)?`<button class="btn btn-primary" onclick="toast('Νέα ανακοίνωση (demo)')">${ic("plus",16)}Νέα ανακοίνωση</button>`:"")+card("Όλες",announcementsList())},
+  exams(){return head("Διαγωνίσματα","Προγραμματισμένα διαγωνίσματα")+card("Επερχόμενα",`<div class="list">${EXAMS.concat([{title:"Πιθανότητες",cls:"c2",date:"Παρ 4 Δεκ, 16:00"},{title:"Οργανική Χημεία",cls:"c4",date:"Τετ 9 Δεκ, 16:00"}]).map(e=>`<div class="row"><div class="bar" style="background:${clsById(e.cls).color}"></div><div class="grow"><div class="fw">${e.title}</div><div class="muted small">${clsById(e.cls).name} · ${tName(clsById(e.cls).teacher)}</div></div><span class="badge t-warning">${e.date}</span></div>`).join("")}</div>`)},
+  attendance(){return head("Παρουσίες","Σύνοψη ανά τμήμα — σήμερα")+card("Παρουσίες ανά τμήμα",`<div class="bars">${CLASSES.map(c=>`<div class="col"><div class="b ${c.att<86?"low":""}" style="height:${(c.att-55)*2.2}%"><em>${c.att}%</em></div><div class="lb">${c.subj}</div></div>`).join("")}</div>`)},
+  profile(){const R=ROLES[state.role];return head("Το Προφίλ μου","Στοιχεία και ρυθμίσεις λογαριασμού")+`<div class="card" style="padding:20px;display:flex;gap:16px;align-items:center;max-width:760px"><div class="avatar" style="width:56px;height:56px;font-size:17px">${initials(R.name)}</div><div><div class="fw" style="font-size:17px">${R.name}</div><div class="muted">${R.email} · ${R.label}</div></div></div>
+    <div class="card" style="padding:20px;margin-top:18px;max-width:760px"><div class="grid g2"><div class="field" style="margin:0"><label>Όνομα</label><input class="input" value="${R.name.split(" ")[0]}"></div><div class="field" style="margin:0"><label>Επώνυμο</label><input class="input" value="${R.name.split(" ").slice(1).join(" ")}"></div><div class="field" style="margin:0"><label>Γλώσσα</label><select class="input"><option>Ελληνικά</option><option>English</option></select></div><div style="display:flex;align-items:flex-end;justify-content:flex-end"><button class="btn btn-primary" onclick="toast('Το προφίλ ενημερώθηκε')">Αποθήκευση</button></div></div></div>`},
+};
+function announcementsList(n){return `<div class="list">${ANNOUNCEMENTS.slice(0,n||9).map(a=>`<div class="row" style="align-items:flex-start"><div class="t-accent" style="width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0">${ic("mega",17)}</div><div class="grow"><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><span class="fw">${a.title}</span><span class="badge b-muted">${a.tag}</span></div><div class="muted small" style="margin-top:3px">${a.body}</div><div class="muted small" style="margin-top:6px">${a.who} · ${a.when}</div></div></div>`).join("")}</div>`}
+
+function render(){
+  const fn=(PAGES[state.role]||{})[state.page]||shared[state.page]||PAGES[state.role].dashboard;
+  $("#view").innerHTML=`<div class="fade">${fn()}</div>`;
+}
+// keep focus in the search box while filtering
+function rerenderKeep(el){const pos=el.selectionStart;render();const n=document.querySelector('#view input.input');if(n){n.focus();n.setSelectionRange(pos,pos)}}
+</script>
+</body>
+</html>
